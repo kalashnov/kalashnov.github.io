@@ -1,8 +1,8 @@
 ---
 layout: default
-permalink: /
+permalink: /cv/
 title: cv
 nav: true
 nav_order: 4
-redirect_to: assets/pdf/kalashnov_cv.pdf
+redirect_to: /assets/pdf/kalashnov_cv.pdf
 ---
