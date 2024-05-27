@@ -9,5 +9,4 @@ zot.add_parameters(format='bibtex')
 pub = zot.publications()
 
 with open('_bibliography/papers.bib', 'w') as f:
-	f.writelines(previous)
 	bibtexparser.dump(pub, f)
