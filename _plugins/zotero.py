@@ -8,5 +8,8 @@ zot = zotero.Zotero(library_id, 'user', api_key)
 zot.add_parameters(format='bibtex')
 pub = zot.publications()
 
+for ent in pub.entries:
+    ent['pdf'] = ent['url']
+
 with open('_bibliography/papers.bib', 'w') as f:
 	bibtexparser.dump(pub, f)
