@@ -19,8 +19,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Ruby
         uses: actions/setup-python@v4
+        id: python
         with:
-	      id: python
           python-version: "3.9"
           cache: 'pip'
           cache-dependency-path: requrements.txt
