@@ -1,5 +1,9 @@
 import bibtexparser
 from pyzotero import zotero
+from scholarly import scholarly
+
+author = scholarly.search_author_id('cyGQzsIAAAAJ')
+pubs_scholar = scholarly.fill(author, sections=['publications'])
 
 library_id = '5089770'
 api_key = 'qCNPbUNmPHEunhCOKdcPkHhW'
