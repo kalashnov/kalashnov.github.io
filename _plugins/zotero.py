@@ -14,7 +14,7 @@ zot_bib.add_parameters(format='bibtex')
 pub_bib = zot_bib.publications()
 
 for ent_bib in pub_bib.entries:
-    ent_bib['pdf'] = ent_bib['url']
+    # ent_bib['pdf'] = ent_bib['url']
     note = ent_bib.get('note', '{}')
     ent_bib.pop('note', None)
     note = note.replace('\\', '')
