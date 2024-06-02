@@ -16,6 +16,7 @@ pub_bib = zot_bib.publications()
 for ent_bib in pub_bib.entries:
     ent_bib['pdf'] = ent_bib['url']
     note = ent_bib.get('note', '{}')
+    ent_bib.pop('note', None)
     note = note.replace('\\', '')
     note = yaml.safe_load(note)
     ent_bib.update(note)
