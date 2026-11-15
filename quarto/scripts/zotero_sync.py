@@ -150,6 +150,10 @@ def from_zotero():
     # last run's Scholar data, kept for papers Scholar didn't answer for this time
     previous = {p['key']: p['scholar'] for p in yaml.safe_load(PAPERS.read_text()) or [] if 'scholar' in p} \
         if PAPERS.exists() else {}
+    if not previous and OLD_BIB.exists():  # first deploy: the Jekyll site's last known Scholar data
+        previous = {e['zotero_key']: {'id': e['google_scholar_id'], 'citations': int(e.get('citations', 0))}
+                    for e in bibtexparser.loads(OLD_BIB.read_text()).entries
+                    if 'zotero_key' in e and 'google_scholar_id' in e}
     entries = []
 
     for item in zot.everything(zot.publications(include='bibtex,data')):
