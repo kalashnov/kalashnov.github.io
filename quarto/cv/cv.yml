@@ -1,0 +1,96 @@
+# The CV: single source for the PDF (cv/kalashnov_cv.pdf) and the web page (cv.qmd).
+# RenderCV format, https://docs.rendercv.com (v2.8). Edit this file, then run:
+#   python scripts/cv_publications.py
+# Sections whose value is a paper status (published | working | wip) are filled from data/papers.yml.
+cv:
+  name: Georgy Kalashnov
+  email: gkalashnov@ucsd.edu
+  website: https://kalashnov.github.io
+  social_networks:
+    - network: GitHub
+      username: kalashnov
+  custom_connections:  # shown as the label, not the URL
+    - placeholder: Google Scholar
+      url: https://scholar.google.com/citations?user=cyGQzsIAAAAJ
+      fontawesome_icon: graduation-cap
+  sections:
+    education:
+      - institution: University of California San Diego
+        area: PhD in Economics
+        start_date: 2023
+        end_date: present
+        location: La Jolla, CA
+      - institution: Stanford Graduate School of Business
+        area: Research Fellowship Program
+        start_date: 2021
+        end_date: 2023
+        location: Stanford, CA
+        highlights:
+          - 'PhD-level courses: Data Mining and Analysis (STATS 202), Contracts, Information and Incentives (ECON 282), Causal Inference (STATS 361), Convex Optimization I (CME 364A)'
+      - institution: New Economic School
+        area: MA in Economics
+        start_date: 2015
+        end_date: 2017
+        location: Moscow, Russia
+        highlights:
+          - 'Fields: Mechanism Design, Data Analysis'
+      - institution: Moscow State University
+        area: BA in Economics
+        start_date: 2011
+        end_date: 2015
+        location: Moscow, Russia
+        highlights:
+          - 'Fields: Behavioral Economics, Econometrics'
+    Publications: published
+    Working Papers: working
+    Work in Progress: wip
+    experience:
+      - company: Stanford Graduate School of Business
+        position: Research Assistant
+        start_date: 2021
+        end_date: 2023
+        location: Stanford, CA
+        highlights:
+          - Constraining generic machine learning models to align their output with a regulator's preferences (e.g. bank credit scoring); simple post-projection of the model output on the feasible set performs best
+          - Python simulations with TensorFlow, XGBoost and glmnet, including applying TensorFlow losses to XGBoost models
+          - Fine-tuning GPT models to perform data analysis tasks
+      - company: Yandex.Taxi
+        position: Machine Learning Engineer
+        start_date: 2017-02
+        end_date: 2020-08
+        location: Moscow, Russia
+        highlights:
+          - Estimated uplift targeting models to design driver subsidies, ran the experiments and evaluated the models; ≈30% efficiency gain of a high-cost driver support program
+          - Evaluated push notifications with encouragement-design experiments, designed active marketing policies, managed the push notification product; price drop notifications increased the total market by ≈1%
+          - Competitive intelligence analytics combining many data sources; contributed to the acquisition of Uber's business in Russia and the CIS
+      - company: Moscow State University
+        position: Lecturer, Teaching Assistant
+        start_date: 2018-09
+        end_date: 2021-06
+        location: Moscow, Russia
+        highlights:
+          - 'Lecturer: Applied Econometrics (Fall 2018–2020, Spring 2020–2021), Microeconomics II (Fall 2019), Introduction to Data Analysis (Fall 2019–2020)'
+          - 'Teaching Assistant: Behavioral Economics (Fall 2015–2018, 2020)'
+    Honors and Events:
+      - label: 'Summer School "Experimental Economics: Purposes, Design, Tools" (EPEE)'
+        details: Participant, 2019
+      - label: All-Russian competition in economics for high school students
+        details: Jury, 2018–2021
+      - label: Econometrics Game in Amsterdam
+        details: Finalist, 2017
+      - label: Jerusalem School in Network Theory
+        details: Participant, 2016
+      - label: International Statistics Olympiad in Iran
+        details: 1st prize, 2014
+    skills:
+      - label: Python
+        details: scikit-learn, XGBoost, TensorFlow, PyTorch, oTree; web scraping and visualization (Beautiful Soup, requests, Dash)
+      - label: R
+        details: tidyverse, data.table
+      - label: Tools
+        details: git, LaTeX, Slurm, parallel computing, package environments
+design:
+  theme: sb2nov
+  templates:
+    education_entry:
+      main_column: "**INSTITUTION**\n*AREA*\nSUMMARY\nHIGHLIGHTS"  # area holds the full degree, e.g. "PhD in Economics"

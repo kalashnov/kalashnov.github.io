@@ -1,0 +1,187 @@
+---
+title: "Tutorial: who to treat when costs are uncertain (OHIE, parametric model)"
+date: 2026-11-15
+description: Fit the linear parametric priority score from the paper on the Oregon Health Insurance Experiment, in your browser.
+paper: W584E9VL # Zotero item key: this post is the paper's "tutorial" link on /publications/
+aliases: [/blog/2026/ohie-parametric-tutorial/]
+format: live-html
+engine: knitr
+webr:
+  packages: [splitstackshape, ivreg, ggplot2, plotly]
+downloads: true   # .qmd and .ipynb download buttons, with the data
+resources: [ohie.csv]   # made by make_data.R; also uploaded to webR's file system
+---
+
+{{< include /_extensions/r-wasm/live/_knitr.qmd >}}
+{{< include /_partials/prerun.qmd >}}
+
+In this tutorial, I demonstrate the method from from
+[Treatment Allocation under Uncertain Costs](https://arxiv.org/abs/2103.11066) on the
+[Oregon Health Insurance Experiment](https://www.nber.org/programs-projects/projects-and-centers/oregon-health-insurance-experiment) (OHIE).
+In 2008 Oregon allocated Medicaid by lottery. Medicaid improves self-reported health, but it also costs money:
+people who get it take more prescription medications, and how many more varies from person to person.
+If coverage could only be given to some people, who should get it first?
+
+
+```{webr}
+#| label: setup
+#| include: false
+# plotting conventions used by every chart below
+library(ggplot2)
+theme_set(theme_minimal(base_size = 13))
+update_geom_defaults("line", list(linewidth = 0.8))
+score_colour <- "#1f77b4"   # ordering by the score; random targeting is a dashed black line
+options(ggplot2.discrete.colour = c(score_colour, "black"))   # groups: first blue, second black
+interactive <- function(p) {  # ggplot -> zoomable plotly chart, legend below, tidy hover text
+  g <- plotly::plotly_build(plotly::ggplotly(p))
+  tidy <- function(s) {   # "cost: 0.0006994349<br />rule: a<br />rule: a" -> "cost: 0.000699<br />rule: a"
+    m <- gregexpr("-?[0-9]*\\.[0-9]+(e-?[0-9]+)?", s)
+    regmatches(s, m) <- lapply(regmatches(s, m), function(x)
+      vapply(signif(as.numeric(x), 3), format, "", scientific = FALSE, drop0trailing = TRUE))
+    vapply(strsplit(s, "<br />", fixed = TRUE), function(l) paste(unique(l), collapse = "<br />"), "")
+  }
+  g$x$data <- lapply(g$x$data, function(trace) {
+    if (!is.null(trace$text)) trace$text <- tidy(trace$text)
+    trace
+  })
+  g |> plotly::layout(legend = list(orientation = "h", y = -0.25))
+}
+```
+
+## 1. The data
+
+I provide a prepared dataset, based on the public-use OHIE files. It contains pre-lottery characteristics (from the registration form, emergency-department records and the baseline survey), the lottery result, the outcome (self-reported health, from the endline survey) and the cost (the number of prescribed medications, counted only for lottery winners)
+
+The dataset also includes pre-built predictions of outcomes based on pretreatment characteristics, which we will use to reduce noise in the analysis. These are included to avoid the need to fit a separate model for the predictions in this short demo. 
+
+The experiment is randomized, but the chances of winning are confounded with the household size: Medicaid applies to all family members, while the lottery registrations are individual, so members of larger households have a better chance of getting treated. So, first thing we'll do after loading the data, is we will compute these propensities:
+
+```{webr}
+#| label: load
+d <- read.csv("ohie.csv")
+d$prob <- ave(d$W, d$hhsize)
+data.frame(hhsize = table(d$hhsize), prob = round(tapply(d$W, d$hhsize, mean), 3))
+```
+
+We now load the data and also split it into a training set and a test set. First, since the household is treated in it's entirety, we will put the whole household in the same set. Further, I suggest splitting in a stratified way, to reduce unnecessary noise in the evaluation. Each fold will recieve half of the households, stratified by household size and lottery result:
+
+```{webr}
+#| label: split
+library(splitstackshape)
+set.seed(0)
+hh <- aggregate(cbind(prob, treatment = W) ~ household, data = d, FUN = mean)
+rownames(hh) <- hh$household
+picked <- stratified(hh[c("prob", "treatment")], group = c("prob", "treatment"),
+                     size = 0.5, keep.rownames = TRUE)$rn
+in_train <- d$household %in% as.integer(picked)
+train <- d[in_train, ]
+test  <- d[!in_train, ]
+cat(nrow(d), "people:", nrow(train), "to fit the model,", nrow(test), "held out to evaluate it\n")
+cat("share who won the lottery:", round(mean(d$W), 3), "\n")
+```
+
+## 2. Fit the priority score and apply it to the held-out half
+
+The score $\beta(x)$ is the ratio of the lottery's effect on health to its effect on cost. That is exactly
+what an instrumental-variables regression estimates: regress health on cost, using the lottery as an instrument.
+Letting the coefficient vary linearly with the features $x$ gives
+
+$$Y_1 - \hat Y_1 = \beta(x)\,(C - \hat C) + \varepsilon, \qquad \beta(x) = x^\top \beta,$$
+
+with the features interacted with cost as regressors and with the centred lottery indicator $W - p$ as instruments.
+The fitted score is the predicted health gain per extra medication; larger means higher priority.
+
+```{webr}
+#| label: fit
+library(ivreg)
+X <- as.matrix(d[grep("^X\\.", names(d))])   # the 20 features, prepared in the CSV
+fit_data <- data.frame(Y = train$health - train$health.hat,          # health outcome, demeaned
+                       C = train$medication - train$medication.hat,  # cost (medications), demeaned
+                       W = train$W - train$prob,                     # centred lottery assignment
+                       X = I(X[in_train, ]))                         # features, kept as one matrix
+# Left of |: regress health on cost, with the cost coefficient varying linearly in the features
+#            (C + C:X; R expands C:X into one interaction per feature).
+# Right of |: instrument cost with the lottery, interacted with the features in the same way.
+# suppressWarnings: ivreg warns harmlessly when, as here, there are no exogenous regressors
+model <- suppressWarnings(ivreg(Y ~ 0 + C + C:X | 0 + W + W:X, data = fit_data))
+
+# score the held-out half: the predicted health gain per unit of cost (C = 1)
+test$score <- predict(model, data.frame(C = 1, W = 0, X = I(X[!in_train, ])))
+summary(test$score)
+```
+
+## 3. How well does the ranking work?
+
+Treat held-out people from the highest score down and add up their health gains and extra medications.
+Inverse-probability weighting turns each person's observed outcome into an unbiased signal of their own effect.
+The dashed line is what treating people in random order would give.
+The chart is an ordinary ggplot, made interactive by `plotly::ggplotly()`: hover for values, drag to zoom, double-click to reset.
+
+```{webr}
+#| label: qini
+ipw <- test$W / test$prob - (1 - test$W) / (1 - test$prob)
+test$gain <- (test$health - test$health.hat) * ipw   # unbiased signal of each person's health gain
+test$cost <- test$medication * ipw                   # ... and of each person's extra medications
+# QINI curve: rank people by score and add up their gains and costs (per person in the sample)
+qini <- function(df, score) {
+  o <- order(-score)
+  data.frame(cost = cumsum(df$cost[o]), gain = cumsum(df$gain[o])) / nrow(df)
+}
+curve <- qini(test, test$score)
+```
+
+```{webr}
+#| label: curve
+plot_data <- rbind(data.frame(curve[seq(1, nrow(curve), by = 10), ], rule = "order by score"),  # every 10th person
+                   data.frame(rbind(0, tail(curve, 1)), rule = "treat at random"))           # straight line from 0
+p <- ggplot(plot_data, aes(cost, gain, colour = rule, linetype = rule)) +
+  geom_line() +
+  labs(x = "Prescribed medications per patient", y = "Increase in share of healthy people",
+       colour = NULL, linetype = NULL)
+interactive(p)
+```
+
+## 4. How sure are we? The gain over random targeting
+
+Subtract the dashed line from the curve: the lift $\Delta(b)$ is how much more health the score buys than random
+targeting with the same budget $b$. For its uncertainty the paper uses a half-sample bootstrap clustered by household:
+draw half of the households without replacement, recompute $\Delta(b)$, repeat 1,000 times, and take the standard
+deviation as the standard error. The band is $\Delta(b) \pm 1.96$ standard errors at each budget
+(pointwise, not for the whole curve at once).
+
+```{webr}
+#| label: bootstrap
+# gain over random targeting at each budget: the health gain of the people ranked before the cost
+# reaches the budget, minus what random targeting buys; above the total cost both rules treat everyone
+lift <- function(q, budgets) {
+  reached <- findInterval(budgets, rev(cummin(rev(q$cost))), left.open = TRUE)
+  total <- tail(q, 1)
+  c(0, q$gain)[reached + 1] - total$gain / total$cost * pmin(budgets, total$cost)
+}
+budgets <- sort(c(seq(0, tail(curve$cost, 1), length.out = 60), 1))
+
+# half-sample bootstrap, as in the paper: half of the households, without replacement
+households <- unique(test$household)
+set.seed(1)
+boot <- replicate(1000, {
+  keep <- test$household %in% sample(households, length(households) / 2)
+  lift(qini(test[keep, ], test$score[keep]), budgets)
+})
+band <- data.frame(budget = budgets, delta = lift(curve, budgets), se = apply(boot, 1, sd))
+```
+
+```{webr}
+#| label: band
+p2 <- ggplot(band, aes(budget, delta)) +
+  geom_ribbon(aes(ymin = delta - 1.96 * se, ymax = delta + 1.96 * se), fill = score_colour, alpha = 0.2) +
+  geom_line(colour = score_colour) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "Budget: prescribed medications per patient", y = "Gain over random targeting")
+interactive(p2)
+```
+
+At one medication per person the score adds $\Delta = 0.0125$ to the $\hat Q(1) = 0.0232$ that random targeting
+achieves, as in the paper's replication code (whose standard error, 0.0049, uses different random draws).
+With a budget large enough to treat everyone, both rules treat everyone and the lift is zero. The band narrows there
+but not quite to zero, because how much it costs to treat everyone is itself estimated.
+

@@ -1,0 +1,45 @@
+# Builds the Quarto site in quarto/ and deploys it to the gh-pages branch (GitHub Pages serves that branch).
+# Code in posts is not re-run here: results come from quarto/_freeze/, committed after rendering locally
+# (execute: freeze: auto). The CV is rebuilt on every deploy, so it always matches quarto/data/papers.yml.
+name: Publish site
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "quarto/**"
+      - ".github/workflows/publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the built site to gh-pages
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.9.37
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: CV (PDF + web page) from cv/cv.yml and data/papers.yml
+        working-directory: quarto
+        run: |
+          pip install "rendercv[full]==2.8"
+          python scripts/cv_publications.py
+      - name: Render
+        working-directory: quarto
+        run: |
+          quarto render
+          touch _site/.nojekyll   # serve Quarto's output as is
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: quarto/_site

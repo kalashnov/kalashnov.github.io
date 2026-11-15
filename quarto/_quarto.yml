@@ -1,0 +1,44 @@
+# Quarto website for kalashnov.github.io (replaces the Jekyll/al-folio site; see _planning/quarto-migration.md).
+# Write: `quarto preview`. Build: `quarto render` (output in _site/).
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - images/previews/*
+  pre-render: scripts/post_downloads.py   # .qmd/.ipynb copies of posts with `downloads: true`
+  render:
+    - "*.qmd"
+    - "!posts/*/2*.qmd"     # those copies are downloads, not pages
+    - "!posts/*/*.ipynb"
+
+website:
+  title: "Georgy Kalashnov"
+  site-url: https://kalashnov.github.io
+  favicon: images/favicon.svg
+  navbar:
+    title: "**Georgy** Kalashnov"
+    right:
+      - text: About
+        href: index.qmd
+      - text: Research
+        href: publications.qmd
+      - text: CV
+        href: cv.qmd
+
+# top level, so they also apply to quarto-live pages (format: live-html), not only to html
+theme:
+  light: [cosmo, theme/light.scss]
+  dark: [cosmo, theme/dark.scss]
+include-in-header: _partials/head.html
+filters:
+  - _partials/downloads.lua             # download buttons on posts with `downloads: true`
+# where this site's files are on GitHub (download buttons link there); drop /quarto after the cutover
+github-files: https://github.com/kalashnov/kalashnov.github.io/blob/master/quarto
+toc: false
+link-external-newwindow: true   # as on the al-folio site
+# links to these hosts count as internal (same tab); local previews included
+link-external-filter: '^(?:https?:)\/\/(?:kalashnov\.github\.io|localhost|127\.0\.0\.1)'
+lang: en
+
+execute:
+  freeze: auto   # code runs when you render locally; CI reuses the frozen results in _freeze/
