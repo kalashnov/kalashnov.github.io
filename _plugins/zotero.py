@@ -6,6 +6,7 @@ Per item, extra al-folio fields come from:
   - any attachment whose URL is on arxiv.org (e.g. arXiv snapshot) -> arxiv
   - an image attachment                                        -> preview (downloaded)
   - tags `selected` / `forthcoming`                            -> home page / ", forthcoming"
+  - unpublished and no public draft (no `pdf` link, no arXiv)  -> wip ("Work in progress" section)
   - tag `field: Applied research`                              -> field (Research page "by field" view)
   - Zotero item key                                            -> zotero_key (blog post / summary lookup on the site)
   - item type Preprint / Manuscript                            -> preprint ("Working papers" section)
@@ -90,6 +91,9 @@ def main():
 
         if data['itemType'] in ('preprint', 'manuscript'):
             entry['preprint'] = 'true'
+            # no draft to read yet -> "Work in progress" instead of "Working papers"
+            if not (entry.get('pdf') or entry.get('arxiv')):
+                entry['wip'] = 'true'
         # the public My Publications endpoint omits tags; read them from the library item
         raw_tags = [t['tag'] for t in zot.item(data['key'])['data']['tags']]
         tags = {t.lower() for t in raw_tags}

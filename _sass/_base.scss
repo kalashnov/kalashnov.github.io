@@ -1123,3 +1123,65 @@ ninja-keys {
 ninja-keys::part(ninja-input-wrapper) {
   background: var(--global-bg-color);
 }
+
+// Economist-style paper entries (see _layouts/bib.liquid)
+.publications ol.bibliography li .paper {
+  // the hidden bibtex <pre> is very wide; without this the text column grows and pushes the picture below
+  > .col {
+    min-width: 0;
+  }
+  .title {
+    font-weight: 600;
+    a {
+      color: var(--global-text-color);
+      &:hover {
+        color: var(--global-theme-color);
+        text-decoration: none;
+      }
+    }
+  }
+  .meta {
+    color: var(--global-text-color-light);
+    a {
+      color: inherit;
+      border-bottom: 1px dashed var(--global-text-color-light);
+      &:hover {
+        text-decoration: none;
+        border-bottom-style: solid;
+      }
+    }
+  }
+  .summary {
+    margin-top: 0.25rem;
+  }
+  .links {
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    a {
+      margin-right: 0.9rem;
+      color: var(--global-theme-color);
+      cursor: pointer;
+    }
+    .scholar-badge img {
+      height: 1.1rem;
+      vertical-align: -0.2rem;
+    }
+  }
+  .paper-preview .preview {
+    width: 100%;
+  }
+}
+
+// Paper list spacing
+.publications {
+  ol.bibliography li {
+    margin-bottom: 1.5rem;
+  }
+  // keep a clear break before the next section (Published, Work in progress, a field…)
+  .pub-section:has(li) ~ .pub-section > h2:first-child {
+    margin-top: 3.5rem;
+  }
+  ol.bibliography {
+    margin-bottom: 0;
+  }
+}

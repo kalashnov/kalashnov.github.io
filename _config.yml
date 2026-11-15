@@ -314,8 +314,10 @@ scholar:
   details_link: Details
 
   query: "@*"
-  group_by: year
+  group_by: none # no year headings; sort_by below keeps newest first
   group_order: descending
+  sort_by: year # newest first within every list/group
+  order: descending
 
 # Display different badges withs stats for your publications
 enable_publication_badges:
@@ -343,6 +345,7 @@ filtered_bibtex_keywords:
     poster,
     preview,
     preprint,
+    wip,
     zotero_key,
     selected,
     slides,
