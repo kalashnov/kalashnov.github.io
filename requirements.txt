@@ -1,4 +1,4 @@
 nbconvert
 pyzotero==1.5.19
+bibtexparser==1.4.3
 scholarly==1.7.11
-PyYAML==6.0.1

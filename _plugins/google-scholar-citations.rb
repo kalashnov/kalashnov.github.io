@@ -15,11 +15,13 @@ module Jekyll
       splitted = params.split(" ").map(&:strip)
       @scholar_id = splitted[0]
       @article_id = splitted[1]
+      @fallback = splitted[2] # optional: count from the Zotero/Scholar sync, used if Scholar blocks us
     end
 
     def render(context)
       article_id = context[@article_id.strip]
       scholar_id = context[@scholar_id.strip]
+      fallback = @fallback && context[@fallback.strip]
       article_url = "https://scholar.google.com/citations?view_op=view_citation&hl=en&user=#{scholar_id}&citation_for_view=#{scholar_id}:#{article_id}"
 
       begin
@@ -40,6 +42,9 @@ module Jekyll
           # Look for meta tags with "name" attribute set to "description"
           description_meta = doc.css('meta[name="description"]')
           og_description_meta = doc.css('meta[property="og:description"]')
+
+          # No description at all = not the article page (e.g. Scholar's bot check), not "0 citations"
+          raise "no article page returned (bot check?)" if description_meta.empty? && og_description_meta.empty?
 
           if !description_meta.empty?
             cited_by_text = description_meta[0]['content']
@@ -62,10 +67,10 @@ module Jekyll
 
       rescue Exception => e
         # Handle any errors that may occur during fetching
-        citation_count = "N/A"
+        citation_count = fallback || "N/A"
 
         # Print the error message including the exception class and message
-        puts "Error fetching citation count for #{article_id}: #{e.class} - #{e.message}"
+        puts "Error fetching citation count for #{article_id}: #{e.class} - #{e.message}; using #{citation_count}"
       end
 
 
