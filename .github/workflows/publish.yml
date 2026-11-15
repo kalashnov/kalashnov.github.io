@@ -10,6 +10,10 @@ on:
     paths:
       - "quarto/**"
       - ".github/workflows/publish.yml"
+  pull_request: # build only (no deploy), to check a change before merging
+    paths:
+      - "quarto/**"
+      - ".github/workflows/publish.yml"
   schedule:
     - cron: "0 6 * * 1" # Mondays 06:00 UTC: new Zotero items, Google Scholar counts
   workflow_dispatch:
@@ -18,7 +22,7 @@ permissions:
   contents: write # push the built site to gh-pages
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
   cancel-in-progress: true
 
 jobs:
@@ -69,6 +73,7 @@ jobs:
         run: |
           quarto render
           touch _site/.nojekyll   # serve Quarto's output as is
-      - uses: JamesIves/github-pages-deploy-action@v4
+      - if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: quarto/_site
