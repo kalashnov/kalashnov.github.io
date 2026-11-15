@@ -6,22 +6,26 @@ on:
       - master
       - main
   workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC: pick up new Zotero items + Scholar IDs
 
 permissions:
   contents: write
+  actions: write # to start deploy.yml after a sync commit
 
 jobs:
   deploy:
     # available images: https://github.com/actions/runner-images#available-images
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         id: python
         with:
-          python-version: "3.9"
+          python-version: "3.12"
           cache: 'pip'
           cache-dependency-path: requirements.txt
       - name: Install dependencies
@@ -31,6 +35,15 @@ jobs:
         # if: steps.python.outputs.cache-hit != 'true'
       - name: Run Zotero
         run: python _plugins/zotero.py
+        env:
+          ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
       - uses: stefanzweifel/git-auto-commit-action@v5
+        id: commit
         with:
           commit_message: Zotero file
+      # pushes made with GITHUB_TOKEN don't trigger other workflows, so start the deploy explicitly
+      - name: Deploy if bibliography changed
+        if: steps.commit.outputs.changes_detected == 'true' && github.event_name != 'pull_request'
+        run: gh workflow run deploy.yml --ref ${{ github.ref_name }}
+        env:
+          GH_TOKEN: ${{ github.token }}

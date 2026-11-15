@@ -1,6 +1,6 @@
 ---
 layout: about
-title: about
+title: About
 permalink: /
 subtitle: A researcher in Econometrics, Machine Learning, and Mechanism Design
 
