@@ -6,6 +6,7 @@ Per item, extra al-folio fields come from:
   - any attachment whose URL is on arxiv.org (e.g. arXiv snapshot) -> arxiv
   - an image attachment                                        -> preview (downloaded)
   - tags `selected` / `forthcoming`                            -> home page / ", forthcoming"
+  - tag `field: Applied research`                              -> field (Research page "by field" view)
   - Zotero item key                                            -> zotero_key (blog post / summary lookup on the site)
   - item type Preprint / Manuscript                            -> preprint ("Working papers" section)
 """
@@ -90,7 +91,11 @@ def main():
         if data['itemType'] in ('preprint', 'manuscript'):
             entry['preprint'] = 'true'
         # the public My Publications endpoint omits tags; read them from the library item
-        tags = {t['tag'].lower() for t in zot.item(data['key'])['data']['tags']}
+        raw_tags = [t['tag'] for t in zot.item(data['key'])['data']['tags']]
+        tags = {t.lower() for t in raw_tags}
+        for t in raw_tags:
+            if t.lower().startswith('field:'):
+                entry['field'] = t.split(':', 1)[1].strip()
         if 'selected' in tags:
             entry['selected'] = 'true'
         if 'forthcoming' in tags:
