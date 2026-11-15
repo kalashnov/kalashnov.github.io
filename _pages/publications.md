@@ -15,17 +15,23 @@ nav_order: 2
   <button type="button" class="btn btn-sm z-depth-0" data-sort="field" aria-pressed="false">Field</button>
 </div>
 
+<!-- Time view: working papers vs. published, each by year -->
+<div class="by-year">
 <section class="pub-section">
 <h2>Working papers</h2>
-<div class="by-year">{% bibliography -f {{ site.scholar.bibliography }} -q @*[preprint=true] %}</div>
-<div class="by-field">{% bibliography -f {{ site.scholar.bibliography }} -q @*[preprint=true] -g field -G descending %}</div>
+{% bibliography -f {{ site.scholar.bibliography }} -q @*[preprint=true] %}
 </section>
 
 <section class="pub-section">
 <h2>Published</h2>
-<div class="by-year">{% bibliography -f {{ site.scholar.bibliography }} -q @*[preprint!=true] %}</div>
-<div class="by-field">{% bibliography -f {{ site.scholar.bibliography }} -q @*[preprint!=true] -g field -G descending %}</div>
+{% bibliography -f {{ site.scholar.bibliography }} -q @*[preprint!=true] %}
 </section>
+</div>
+
+<!-- Field view: all papers by field (Z->A puts Econometric theory first) -->
+<div class="by-field">
+{% bibliography -f {{ site.scholar.bibliography }} -g field -G descending %}
+</div>
 
 <style>
   /* hide a section that has no entries */
