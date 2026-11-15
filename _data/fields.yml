@@ -1,0 +1,5 @@
+# Order of the groups in the Research page "field" view.
+# Names must match the Zotero tags `field: <name>`; a paper whose field is not listed here won't show in that view.
+- Econometric methods
+- Mechanism design
+- Applied research
