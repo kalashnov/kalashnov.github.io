@@ -1,5 +1,10 @@
 .quarto/
 _site/
+**/*.quarto_ipynb
+# built at deploy (publish.yml), not kept in the repo
+data/papers.yml
+images/previews/
+cv/kalashnov_cv.pdf
+cv/_rendercv/cv.md
 
 /.quarto/
-**/*.quarto_ipynb

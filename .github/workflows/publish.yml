@@ -1,6 +1,7 @@
 # Builds the Quarto site in quarto/ and deploys it to the gh-pages branch (GitHub Pages serves that branch).
-# Code in posts is not re-run here: results come from quarto/_freeze/, committed after rendering locally
-# (execute: freeze: auto). The CV is rebuilt on every deploy, so it always matches quarto/data/papers.yml.
+# Everything generated is built here, nothing generated is kept in the repo:
+#   papers + preview images from Zotero, the CV (RenderCV), posts' R code (each post's own renv.lock),
+#   and the posts' .qmd/.ipynb download copies (scripts/post_downloads.py, run after rendering).
 name: Publish site
 
 on:
@@ -9,6 +10,8 @@ on:
     paths:
       - "quarto/**"
       - ".github/workflows/publish.yml"
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC: new Zotero items, Google Scholar counts
   workflow_dispatch:
 
 permissions:
@@ -20,8 +23,11 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      # prebuilt Linux binaries for the R packages in posts' renv.lock files (much faster than compiling)
+      RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/latest
     steps:
       - uses: actions/checkout@v4
       - uses: quarto-dev/quarto-actions/setup@v2
@@ -30,11 +36,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: CV (PDF + web page) from cv/cv.yml and data/papers.yml
+      - run: pip install pyzotero==1.5.19 bibtexparser==1.4.3 scholarly==1.7.11 pyyaml "rendercv[full]==2.8"
+
+      - name: Papers and previews from Zotero
         working-directory: quarto
         run: |
-          pip install "rendercv[full]==2.8"
-          python scripts/cv_publications.py
+          # last deploy's papers.yml, so Google Scholar counts survive when Scholar blocks the request
+          git fetch --depth 1 origin gh-pages && git show FETCH_HEAD:data/papers.yml > data/papers.yml || rm -f data/papers.yml
+          python scripts/zotero_sync.py
+        env:
+          ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
+      - name: CV (PDF + web page) from cv/cv.yml and data/papers.yml
+        working-directory: quarto
+        run: python scripts/cv_publications.py
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/R/renv
+          key: renv-${{ runner.os }}-${{ hashFiles('quarto/posts/*/renv.lock') }}
+          restore-keys: renv-${{ runner.os }}-
+      - name: R packages of each post (from its renv.lock)
+        run: |
+          for lock in quarto/posts/*/renv.lock; do
+            (cd "$(dirname "$lock")" && Rscript -e 'renv::restore(prompt = FALSE)')
+          done
+
       - name: Render
         working-directory: quarto
         run: |

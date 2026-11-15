@@ -4,12 +4,10 @@ project:
   type: website
   output-dir: _site
   resources:
-    - images/previews/*
-  pre-render: scripts/post_downloads.py   # .qmd/.ipynb copies of posts with `downloads: true`
-  render:
-    - "*.qmd"
-    - "!posts/*/2*.qmd"     # those copies are downloads, not pages
-    - "!posts/*/*.ipynb"
+    - images/previews/*   # downloaded from Zotero at deploy
+    - data/papers.yml     # published, so the next deploy can reuse its Google Scholar counts
+    - posts/*/renv.lock   # each post's R package versions, next to its download copies
+  post-render: scripts/post_downloads.py   # .qmd/.ipynb copies of posts with `downloads: true`
 
 website:
   title: "Georgy Kalashnov"
@@ -32,13 +30,11 @@ theme:
 include-in-header: _partials/head.html
 filters:
   - _partials/downloads.lua             # download buttons on posts with `downloads: true`
-# where this site's files are on GitHub (download buttons link there); drop /quarto after the cutover
-github-files: https://github.com/kalashnov/kalashnov.github.io/blob/master/quarto
+# the built site on GitHub (gh-pages branch): download buttons link to the copies there
+github-files: https://github.com/kalashnov/kalashnov.github.io/blob/gh-pages
 toc: false
 link-external-newwindow: true   # as on the al-folio site
 # links to these hosts count as internal (same tab); local previews included
 link-external-filter: '^(?:https?:)\/\/(?:kalashnov\.github\.io|localhost|127\.0\.0\.1)'
 lang: en
 
-execute:
-  freeze: auto   # code runs when you render locally; CI reuses the frozen results in _freeze/

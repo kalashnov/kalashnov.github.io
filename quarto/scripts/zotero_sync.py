@@ -32,6 +32,7 @@ SCHOLAR_USER = 'cyGQzsIAAAAJ'
 ME = ('Georgy', 'Kalashnov')
 ROOT = pathlib.Path(__file__).resolve().parent.parent  # quarto/
 PREVIEW_DIR = ROOT / 'images/previews'
+PREVIEW_DIR.mkdir(parents=True, exist_ok=True)  # not in the repo: filled at deploy
 PAPERS = ROOT / 'data/papers.yml'
 COAUTHORS = yaml.safe_load((ROOT / 'data/coauthors.yml').read_text())
 OLD_BIB = ROOT.parent / '_bibliography/papers.bib'
