@@ -3,7 +3,7 @@ title: "Tutorial: who to treat when costs are uncertain (OHIE, parametric model)
 date: 2026-11-15
 description: Fit the linear parametric priority score from the paper on the Oregon Health Insurance Experiment, in your browser.
 paper: W584E9VL # Zotero item key: this post is the paper's "tutorial" link on /publications/
-aliases: [/blog/2026/ohie-parametric-tutorial/]
+aliases: [/blog/2026/ohie-parametric-tutorial/, /blog/2026/treatment-allocation-under-uncertain-costs/]
 format: live-html
 engine: knitr
 webr:
