@@ -89,7 +89,8 @@ def main():
 
         if data['itemType'] in ('preprint', 'manuscript'):
             entry['preprint'] = 'true'
-        tags = {t['tag'].lower() for t in data['tags']}
+        # the public My Publications endpoint omits tags; read them from the library item
+        tags = {t['tag'].lower() for t in zot.item(data['key'])['data']['tags']}
         if 'selected' in tags:
             entry['selected'] = 'true'
         if 'forthcoming' in tags:
