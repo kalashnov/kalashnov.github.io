@@ -8,6 +8,7 @@ project:
   resources:
     - images/previews/*   # downloaded from Zotero at deploy
     - data/papers.yml     # published, so the next deploy can reuse its Google Scholar counts
+    - js/interactions.js  # quizzes and analytics events, on every page (_partials/head.html)
   post-render: scripts/post_downloads.py   # .qmd/.ipynb copies of posts with `downloads: true`
 
 website:
@@ -31,6 +32,7 @@ theme:
 include-in-header: _partials/head.html
 filters:
   - _partials/downloads.lua             # download buttons on posts with `downloads: true`
+  - _partials/quiz.lua                  # ::: {.quiz} blocks: multiple-choice quizzes
 # the built site on GitHub (gh-pages branch): download buttons link to the copies there
 github-files: https://github.com/kalashnov/kalashnov.github.io/tree/gh-pages
 toc: false
