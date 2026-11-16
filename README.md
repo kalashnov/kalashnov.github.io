@@ -26,6 +26,7 @@ two includes at the top of the body (see the OHIE tutorial). `downloads: true` a
 ## Working locally
 
 ```sh
+scripts/get_quarto_live.sh                                  # quarto-live extension (pinned)
 git fetch origin gh-pages                                   # data built by the last deploy
 git show FETCH_HEAD:data/papers.yml > data/papers.yml       # (or: ZOTERO_API_KEY=... python scripts/zotero_sync.py)
 git archive FETCH_HEAD images/previews | tar -x

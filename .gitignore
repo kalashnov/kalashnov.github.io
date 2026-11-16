@@ -2,10 +2,11 @@
 _site/
 **/*.quarto_ipynb
 .DS_Store
-# built at deploy (.github/workflows/publish.yml), not kept in the repo
+# built at deploy (.github/workflows/publish.yml), not kept in the repo; _extensions/: scripts/get_quarto_live.sh
 data/papers.yml
 images/previews/
 cv/kalashnov_cv.pdf
 cv/_rendercv/cv.md
+_extensions/
 
 /.quarto/
