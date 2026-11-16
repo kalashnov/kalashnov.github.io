@@ -1,6 +1,0 @@
-# One-line research summaries shown under each paper on /publications/.
-# Key = the paper's Zotero item key (Zotero: right-click item -> the key is in its URL / zotero_key in papers.bib).
-W584E9VL: Who to treat when treatment costs are uncertain — rank people by a learned benefit-to-cost priority score.
-AM7PHNQE: Allocating a good when asking buyers about their valuations is costly — when to stop asking and who gets the good.
-7G23PB4Z: Team penalties in the lab — cooperation tracks how robust the efficient equilibrium is (p-dominance), not how large the penalty is.
-FQRPW2V8: Why Poisson beats log-linear regression for policy evaluation — it estimates the ratio of means, weighting units by their size.

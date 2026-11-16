@@ -1,0 +1,35 @@
+<% /*
+  One paper per item of data/papers.yml, economist-style (styles: theme/research.css):
+    Title (link to the paper)
+    with Coauthor A, B, and C · Journal, forthcoming · 2026
+    one-line summary
+    abstract  published version  arxiv  tutorial  code  [scholar badge]          [picture]
+  All display decisions (links, venue, status) are made in scripts/zotero_sync.py.
+  In Quarto's templates the dash tag escapes, the equals tag does not (meta is built HTML).
+  Output is a raw HTML block, so pandoc leaves the indented markup alone.
+*/ %>
+```{=html}
+<% const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); %>
+<% const and = (xs) => xs.length < 3 ? xs.join(' and ') : xs.slice(0, -1).join(', ') + ', and ' + xs.at(-1); %>
+<% for (const p of items) {
+  const coauthors = (p.coauthors || []).map((c) => c.url ? `<a href="${esc(c.url)}">${esc(c.name)}</a>` : esc(c.name));
+  const meta = [coauthors.length && 'with ' + and(coauthors), p.venue && esc(p.venue).replace(/^(.*?)(, forthcoming)?$/, "<em>$1</em>$2"),
+                p.status === 'published' && p.year].filter(Boolean);
+  const scholar = p.scholar && `https://scholar.google.com/citations?view_op=view_citation&hl=en&user=cyGQzsIAAAAJ&citation_for_view=cyGQzsIAAAAJ:${p.scholar.id}`;
+%>
+<div class="paper" id="<%- p.key %>">
+  <div class="paper-text">
+    <div class="title"><% if (p.url) { %><a href="<%- p.url %>"><%- p.title %></a><% } else { %><%- p.title %><% } %></div>
+    <div class="meta"><%= meta.join(' · ') %></div>
+    <% if (p.summary) { %><div class="summary"><%- p.summary %></div><% } %>
+    <div class="links">
+      <% if (p.abstract) { %><button type="button" class="abstract-toggle" onclick="this.closest('.paper').querySelector('.abstract').toggleAttribute('hidden')">abstract</button><% } %>
+      <% for (const l of p.links || []) { %><a href="<%- l.url %>"><%- l.label %></a><% } %>
+      <% if (scholar) { %><a class="scholar-badge" href="<%- scholar %>" aria-label="Google Scholar citations"><img src="https://img.shields.io/badge/scholar-<%- p.scholar.citations %>-4285F4?logo=googlescholar&labelColor=beige" alt="<%- p.scholar.citations %> Google Scholar citations"></a><% } %>
+    </div>
+    <% if (p.abstract) { %><div class="abstract" hidden><p><%- p.abstract %></p></div><% } %>
+  </div>
+  <% if (p.preview) { %><figure class="paper-preview"><img src="/images/previews/<%- p.preview %>" alt="<%- p.title %>" data-zoomable></figure><% } %>
+</div>
+<% } %>
+```

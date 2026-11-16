@@ -1,0 +1,84 @@
+---
+title: "Research"
+css: theme/research.css
+resources: [js/zoom.js]
+include-after-body:
+  text: |
+    <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script>
+    <script src="/js/zoom.js"></script>
+# one listing per section, all over data/papers.yml (made by scripts/zotero_sync.py), rendered by _partials/papers.ejs.
+# The field listings follow the order of data/fields.yml: keep them in sync.
+listing:
+  - {id: working,   contents: data/papers.yml, template: _partials/papers.ejs, sort: "year desc", include: {status: working}}
+  - {id: published, contents: data/papers.yml, template: _partials/papers.ejs, sort: "year desc", include: {status: published}}
+  - {id: wip,       contents: data/papers.yml, template: _partials/papers.ejs, sort: "year desc", include: {status: wip}}
+  - {id: econometric-methods, contents: data/papers.yml, template: _partials/papers.ejs, sort: "year desc", include: {field: Econometric methods}}
+  - {id: mechanism-design,    contents: data/papers.yml, template: _partials/papers.ejs, sort: "year desc", include: {field: Mechanism design}}
+  - {id: applied-research,    contents: data/papers.yml, template: _partials/papers.ejs, sort: "year desc", include: {field: Applied research}}
+---
+
+::: {.publications}
+
+```{=html}
+<div class="sort-toggle" role="group" aria-label="Sort papers">
+  sort by
+  <button type="button" data-sort="year" aria-pressed="true">status</button>
+  <button type="button" data-sort="field" aria-pressed="false">field</button>
+</div>
+```
+
+::: {.by-status}
+::: {.pub-section}
+## Working papers
+::: {#working}
+:::
+:::
+::: {.pub-section}
+## Published
+::: {#published}
+:::
+:::
+::: {.pub-section}
+## Work in progress
+::: {#wip}
+:::
+:::
+:::
+
+::: {.by-field}
+::: {.pub-section}
+## Econometric methods
+::: {#econometric-methods}
+:::
+:::
+::: {.pub-section}
+## Mechanism design
+::: {#mechanism-design}
+:::
+:::
+::: {.pub-section}
+## Applied research
+::: {#applied-research}
+:::
+:::
+:::
+
+:::
+
+```{=html}
+<script>
+  (() => {
+    const root = document.querySelector('.publications');
+    const buttons = root.querySelectorAll('.sort-toggle button');
+    const show = (sort) => {
+      root.classList.toggle('sort-field', sort === 'field');
+      buttons.forEach((b) => b.setAttribute('aria-pressed', b.dataset.sort === sort));
+      try { localStorage.setItem('pubSort', sort); } catch (e) {}
+    };
+    buttons.forEach((b) => b.addEventListener('click', () => show(b.dataset.sort)));
+    let saved = null;
+    try { saved = localStorage.getItem('pubSort'); } catch (e) {}
+    if (saved) show(saved);
+  })();
+</script>
+```

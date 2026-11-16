@@ -1,0 +1,3 @@
+Type: project
+Description: R packages for this post (renv reads them from here: it does not see inside {webr} cells).
+Imports: splitstackshape, ivreg, ggplot2, plotly, rmarkdown, knitr

@@ -1,0 +1,42 @@
+# Quarto website for kalashnov.github.io. Write: `quarto preview`. Build: `quarto render` (output in _site/).
+# Deployed by .github/workflows/publish.yml (see README.md).
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "*.qmd"   # pages are .qmd files (not README.md)
+  resources:
+    - images/previews/*   # downloaded from Zotero at deploy
+    - data/papers.yml     # published, so the next deploy can reuse its Google Scholar counts
+    - posts/*/renv.lock   # each post's R package versions, next to its download copies
+  post-render: scripts/post_downloads.py   # .qmd/.ipynb copies of posts with `downloads: true`
+
+website:
+  title: "Georgy Kalashnov"
+  site-url: https://kalashnov.github.io
+  favicon: images/favicon.svg
+  navbar:
+    title: "**Georgy** Kalashnov"
+    right:
+      - text: About
+        href: index.qmd
+      - text: Research
+        href: publications.qmd
+      - text: CV
+        href: cv.qmd
+
+# top level, so they also apply to quarto-live pages (format: live-html), not only to html
+theme:
+  light: [cosmo, theme/light.scss]
+  dark: [cosmo, theme/dark.scss]
+include-in-header: _partials/head.html
+filters:
+  - _partials/downloads.lua             # download buttons on posts with `downloads: true`
+# the built site on GitHub (gh-pages branch): download buttons link to the copies there
+github-files: https://github.com/kalashnov/kalashnov.github.io/blob/gh-pages
+toc: false
+link-external-newwindow: true   # as on the al-folio site
+# links to these hosts count as internal (same tab); local previews included
+link-external-filter: '^(?:https?:)\/\/(?:kalashnov\.github\.io|localhost|127\.0\.0\.1)'
+lang: en
+

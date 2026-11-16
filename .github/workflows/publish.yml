@@ -1,0 +1,70 @@
+# Builds the Quarto site and deploys it to the gh-pages branch (GitHub Pages serves that branch).
+# Everything generated is built here, nothing generated is kept in the repo:
+#   papers + preview images from Zotero, the CV (RenderCV), posts' R code (each post's own renv.lock),
+#   and the posts' .qmd/.ipynb download copies (scripts/post_downloads.py, run after rendering).
+name: Publish site
+
+on:
+  push:
+    branches: [master]
+  pull_request: # build only (no deploy), to check a change before merging
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC: new Zotero items, Google Scholar counts
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the built site to gh-pages
+
+concurrency:
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      # prebuilt Linux binaries for the R packages in posts' renv.lock files (much faster than compiling)
+      RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.9.37
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyzotero==1.5.19 bibtexparser==1.4.3 scholarly==1.7.11 pyyaml "rendercv[full]==2.8"
+
+      - name: Papers and previews from Zotero
+        run: |
+          # last deploy's papers.yml, so Google Scholar counts survive when Scholar blocks the request
+          git fetch --depth 1 origin gh-pages && git show FETCH_HEAD:data/papers.yml > data/papers.yml || rm -f data/papers.yml
+          python scripts/zotero_sync.py
+        env:
+          ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
+      - name: CV (PDF + web page) from cv/cv.yml and data/papers.yml
+        run: python scripts/cv_publications.py
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/R/renv
+          key: renv-${{ runner.os }}-${{ hashFiles('posts/*/renv.lock') }}
+          restore-keys: renv-${{ runner.os }}-
+      - name: R packages of each post (from its renv.lock)
+        run: |
+          for lock in posts/*/renv.lock; do
+            (cd "$(dirname "$lock")" && Rscript -e 'renv::restore(prompt = FALSE)')
+          done
+
+      - name: Render
+        run: |
+          quarto render
+          touch _site/.nojekyll   # serve Quarto's output as is
+      - if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: _site

@@ -1,0 +1,30 @@
+```{r}
+#| echo: false
+# Pre-run outputs for quarto-live: each {webr} cell is also run here, at render time, and its output
+# is placed under the cell, so readers see results before (and without) running anything in the
+# browser. Pressing Run in a cell hides its pre-run output in favour of the live one.
+knitr::knit_engines$set(webr = function(options) {
+  live <- knitr:::one_string(c("```{webr}", options$yaml.code, options$code, "```"))
+  hidden <- any(grepl("include:\\s*false", options$yaml.code))
+  out <- knitr::knit_child(text = c("```{r}", "#| echo: false", options$code, "```"),
+                           envir = globalenv(), quiet = TRUE)
+  if (hidden || !grepl("cell-output", out)) return(live)   # nothing printed: no pre-run block
+  knitr:::one_string(c(live, "", "::: {.prerun}", out, ":::"))
+})
+```
+
+```{=html}
+<script>
+  // hide a cell's pre-run output once the reader runs that cell (Run Code, or Ctrl/Shift/Cmd+Enter)
+  const hidePrerun = (target) => {
+    for (const p of document.querySelectorAll(".prerun"))
+      if (p.previousElementSibling?.contains(target)) p.hidden = true;
+  };
+  document.addEventListener("click", (e) => {
+    if (/run code/i.test(e.target.closest("button, a, [role=button], .btn")?.textContent || "")) hidePrerun(e.target);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey || e.shiftKey)) hidePrerun(e.target);
+  });
+</script>
+```
