@@ -33,7 +33,7 @@ include-in-header: _partials/head.html
 filters:
   - _partials/downloads.lua             # download buttons on posts with `downloads: true`
 # the built site on GitHub (gh-pages branch): download buttons link to the copies there
-github-files: https://github.com/kalashnov/kalashnov.github.io/blob/gh-pages
+github-files: https://github.com/kalashnov/kalashnov.github.io/tree/gh-pages
 toc: false
 link-external-newwindow: true   # as on the al-folio site
 # links to these hosts count as internal (same tab); local previews included
