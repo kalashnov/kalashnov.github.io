@@ -26,7 +26,7 @@ Previous rational inattention literature, e.g. @hebertRationalInattentionWhen sh
 
 Here is a minimal example, demonstrating the reason for that:
 
-::: {.quiz #ask-first answer="Buyer b" title="Quiz: whom do we ask first?"}
+::: {.quiz #ask-first answer="Buyer b" title="Whom do we ask first?"}
 Suppose $v_i \in \{0, 1\}$, $\mu^0_a = 0.6$, $\mu^0_b = 0.9$. Whom do we ask to extract information first?
 
 - Buyer a
@@ -68,7 +68,7 @@ The optimal solution can then be computed by iterating the bi-concavification op
 
 ## The mechanism
 
-The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it (or tap) to see what happens at that state: the arrows show optimal experiment to be run.
+The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it to see what happens at that state: the arrows show optimal experiment to be run.
 
 ```{python}
 #| echo: false
