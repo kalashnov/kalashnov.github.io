@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pyzotero==1.5.19 bibtexparser==1.4.3 scholarly==1.7.11 pyyaml "rendercv[full]==2.8"
+      - run: pip install jupyter numpy pyzotero==1.5.19 bibtexparser==1.4.3 scholarly==1.7.11 pyyaml "rendercv[full]==2.8"
 
       - name: Papers and previews from Zotero
         run: |

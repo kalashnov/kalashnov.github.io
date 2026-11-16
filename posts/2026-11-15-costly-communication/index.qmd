@@ -1,0 +1,228 @@
+---
+title: "Tutorial: Allocating a Good with Costly Elicitation of Preferences"
+date: 2026-11-15
+paper: AM7PHNQE # Zotero item key: this post is the paper's "tutorial" link on /publications/
+engine: jupyter
+jupyter: python3
+---
+
+A seller wants to give one good to whichever of two buyers values it more. Asking is not free: every bit of
+information a buyer reveals costs effort. So whom should the seller ask, what, and when should the conversation stop?
+This post shows the solution to that optimization problem in the simplest case, from my project
+*Allocating a Good with Costly Elicitation of Preferences*.
+
+## A really toy example
+
+## The problem
+
+Each buyer $i \in \{a, b\}$ values the good at $v_i \in \{0, 1\}$, independently of the other. The seller's
+knowledge about buyer $i$ is a single number, the belief $\mu_i = \Pr(v_i = 1)$. Each message a buyer sends updates
+that belief by Bayes' rule, and only one buyer speaks at a time. When the conversation stops, the good goes to the buyer
+with the higher belief. Communication costs $c$ times the reduction in the entropy of the beliefs, so the seller
+solves
+
+$$
+V(\mu_a, \mu_b) = \max_{\text{conversation}}\
+\mathbb{E}\Big[\max\{\mu_a^\tau, \mu_b^\tau\} - c \sum_{i \in \{a,b\}} \big(H(\mu_i) - H(\mu_i^\tau)\big)\Big],
+\qquad H(\mu) = -\mu \ln \mu - (1-\mu) \ln (1-\mu),
+$$
+
+where $\mu_i^\tau$ is the belief when the conversation ends. (In the paper, transfers make this welfare maximization
+the outcome of the game between the buyers; here I only look at the optimization.)
+
+I solve the problem in continuous time with Pontryagin's maximum principle. At each moment one buyer is speaking.
+Their answer can settle the question at once: the belief jumps to a point where it is optimal to stop. Otherwise the
+belief drifts a little, and the conversation goes on.
+
+## Who speaks, and where the beliefs go
+
+The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it (or tap) to see what happens at that state:
+arrows to the boundary are answers that end the conversation; the other arrows show where the beliefs drift while it continues.
+The slider changes the cost of communication $c$.
+
+```{python}
+#| echo: false
+# Frontier of the stopping region for each cost c: integrates the two singular paths that start at
+# (1/2, 1/2) and reads the frontier off their jump targets (as in plot_binary_regions.py of the project).
+import numpy as np
+
+ell = lambda p: np.log(p / (1 - p))
+li = lambda z: 1 / (1 + np.exp(-z))
+
+
+def rk4(f, x0, y0, x1, n=6000):
+    h = (x1 - x0) / n
+    xs, ys, x, y = [x0], [y0], x0, y0
+    for _ in range(n):
+        k1 = f(x, y); k2 = f(x + h / 2, y + h * k1 / 2); k3 = f(x + h / 2, y + h * k2 / 2); k4 = f(x + h, y + h * k3)
+        y += h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+        x += h
+        xs.append(x); ys.append(y)
+    return np.array(xs), np.array(ys)
+
+
+def frontier(c, grid):
+    """(mu_a = n(mu_b) on the grid, m*): the right-hand frontier of the stopping region, end of the antidiagonal path."""
+    ic = 1 / c
+    m_d, u_d = rk4(lambda m, u: (u - ell(m)) / (m - li(u + ic)), 0.5, -ic / 2, 1 - 1e-6)    # diagonal path
+    mu, u = rk4(lambda m, u: (u - ell(m)) / (m - li(u)), 0.5, -ic / 2, 0.05)                 # antidiagonal path
+    keep = ell(mu) - u > 1e-4
+    mu, u = mu[keep], u[keep]
+    x = np.concatenate([1 - li(u), li(u_d + ic)])            # mu_a on the frontier ...
+    y = np.concatenate([mu, m_d])                            # ... at these mu_b
+    x, y = np.concatenate([x, 1 - y]), np.concatenate([y, 1 - x])   # and its flip-and-swap
+    ok = x >= y                                              # the right-hand frontier lies below the diagonal
+    x, y = np.r_[0, x[ok], 1], np.r_[0, y[ok], 1]
+    o = np.argsort(y)
+    return np.maximum.accumulate(np.interp(grid, y[o], x[o])), 1 - mu[-1]
+
+
+grid = np.linspace(0, 1, 401)
+costs = np.round(np.arange(0.1, 2.0001, 0.05), 2)
+fr = [frontier(c, grid) for c in costs]
+ojs_define(regions={"c": costs.tolist(), "grid": grid.round(4).tolist(),
+                    "n": [f[0].round(4).tolist() for f in fr], "mstar": [round(f[1], 4) for f in fr]})
+```
+
+```{ojs}
+//| echo: false
+viewof c = Inputs.range([regions.c[0], regions.c[regions.c.length - 1]],
+                        {step: 0.05, value: 0.5, label: "Cost, c"})
+```
+
+```{ojs}
+//| echo: false
+// the stopping frontier for the chosen c: mu_a = n(mu_b) on the right, mu_b = n(mu_a) on the left
+fr = {
+  const i = Math.max(0, Math.min(regions.c.length - 1, Math.round((c - regions.c[0]) / 0.05)));
+  const g = regions.grid, nv = regions.n[i];
+  const interp = (x, xs, ys) => {
+    const j = Math.min(Math.max(d3.bisectLeft(xs, x), 1), xs.length - 1);
+    const t = xs[j] === xs[j - 1] ? 0 : (x - xs[j - 1]) / (xs[j] - xs[j - 1]);
+    return ys[j - 1] + t * (ys[j] - ys[j - 1]);
+  };
+  return {g, nv, mstar: regions.mstar[i], n: m => interp(m, g, nv), k: m => interp(m, nv, g)};
+}
+```
+
+```{ojs}
+//| echo: false
+// what happens at state (a, b): the arrow ends [x, y] from the (snapped) state, and a description
+function move(a, b, f) {
+  const r = v => v.toFixed(2), mu = i => `μ<sub>${i}</sub>`;
+  const other = i => (i === "a" ? "b" : "a");
+  const near = 0.012;
+  // buyer i's answer that ends the conversation: the belief jumps outward to the frontier
+  const jump = (i, a, b) => i === "a" ? [a > 0.5 ? f.n(b) : f.k(b), b] : [a, b > 0.5 ? f.n(a) : f.k(a)];
+  const winner = (i, m) => (m > 0.5 ? i : other(i));   // jumping up wins the good, jumping down hands it over
+  if (a > f.n(b) || b > f.n(a))
+    return {a, b, arrows: [], text: `<b>Stop.</b> Given the cost, the beliefs are clear enough: the good goes to
+      buyer ${a >= b ? "a" : "b"}.`};
+  if (Math.hypot(a - 0.5, b - 0.5) < 2 * near) {
+    const lo = f.k(0.5), hi = f.n(0.5);
+    return {a: 0.5, b: 0.5, arrows: [[lo, 0.5], [hi, 0.5], [0.5, lo], [0.5, hi]],
+      text: `<b>The start.</b> One buyer, chosen at random, answers a single yes/no question that moves their belief
+        from 0.5 to ${r(hi)} or ${r(lo)}, and the conversation ends: "yes" and they get the good, "no" and the
+        other buyer does.`};
+  }
+  const towards = (a, b, d) => {   // drift along a red path, towards the centre
+    const s = Math.min(d, Math.hypot(a - 0.5, b - 0.5)) / Math.hypot(a - 0.5, b - 0.5);
+    return [a + s * (0.5 - a), b + s * (0.5 - b)];
+  };
+  if (Math.abs(a - b) < near) {
+    const m = (a + b) / 2, english = m < 0.5;
+    return {a: m, b: m, arrows: [jump("a", m, m), jump("b", m, m), towards(m, m, 0.03)],
+      text: `<b>${english ? "English" : "Dutch"} auction.</b> The buyers take turns. Each answer can end the
+        conversation: ${english
+          ? `a buyer whose belief drops to ${r(f.k(m))} drops out, and the other buyer gets the good`
+          : `a buyer whose belief rises to ${r(f.n(m))} claims the good`}. Until then both beliefs drift
+        ${english ? "up" : "down"} together towards 0.5.`};
+  }
+  if (Math.abs(a + b - 1) < near && Math.max(a, b) <= f.mstar) {
+    const m = (a - b + 1) / 2, hi = m > 0.5 ? "a" : "b", lo = other(hi);
+    return {a: m, b: 1 - m, arrows: [jump("a", m, 1 - m), jump("b", m, 1 - m), towards(m, 1 - m, 0.03)],
+      text: `<b>Both buyers speak.</b> The buyers take turns. Either answer ends the conversation in favour of
+        buyer ${hi}: buyer ${hi} claims the good, or buyer ${lo} drops out. Until then the two beliefs drift
+        towards 0.5.`};
+  }
+  const i = Math.abs(a - 0.5) > Math.abs(b - 0.5) ? "a" : "b";
+  const mi = i === "a" ? a : b, mo = i === "a" ? b : a;
+  const target = 0.5 + Math.sign(mi - 0.5) * Math.abs(mo - 0.5);   // where i's belief meets a red path
+  const [ja, jb] = jump(i, a, b);
+  return {a, b, arrows: [[ja, jb], i === "a" ? [target, b] : [a, target]],
+    text: `<b>Buyer ${i} speaks</b>, buyer ${other(i)} is silent. Either buyer ${i}'s answer settles it:
+      ${mu(i)} jumps to ${r(i === "a" ? ja : jb)} and the good goes to buyer ${winner(i, mi)}. Or ${mu(i)} drifts
+      to ${r(target)}, onto a red path, where both buyers start taking turns.`};
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const f = fr, W = Math.min(width, 560), red = "#c0392b";
+  const col = {stop: "#e8e8e8", a: "#cfe0f2", b: "#a8c4de"};
+  const region = (a, b) => (a > f.n(b) || b > f.n(a)) ? col.stop : Math.abs(a - 0.5) > Math.abs(b - 0.5) ? col.a : col.b;
+  const m = f.mstar;
+  const plot = Plot.plot({
+    width: W, height: W, marginLeft: 46, marginBottom: 42, marginTop: 28, marginRight: 12,
+    x: {domain: [0, 1], ticks: 5, label: "μa, belief that buyer a values the good"},
+    y: {domain: [0, 1], ticks: 5, label: "μb"},
+    color: {type: "identity"},
+    marks: [
+      Plot.raster({x1: 0, y1: 0, x2: 1, y2: 1, fill: region, pixelSize: 2}),
+      Plot.line(f.g.map((y, j) => [f.nv[j], y]), {stroke: "black"}),
+      Plot.line(f.g.map((x, j) => [x, f.nv[j]]), {stroke: "black"}),
+      Plot.line([[0, 0], [1, 1]], {stroke: red, strokeWidth: 2}),
+      Plot.line([[1 - m, m], [m, 1 - m]], {stroke: red, strokeWidth: 2}),
+      Plot.dot([[1 - m, m], [m, 1 - m]], {fill: red, r: 3}),
+      Plot.dot([[0.5, 0.5]], {fill: red, r: 4.5}),
+      Plot.text([{x: 0.2, y: 0.2, t: "English auction"}, {x: 0.82, y: 0.82, t: "Dutch auction"}],
+                {x: "x", y: "y", text: "t", rotate: -45, dy: -9, fill: red, fontSize: 12}),
+      Plot.frame()
+    ]
+  });
+  const x = plot.scale("x"), y = plot.scale("y"), svg = d3.select(plot);
+  const arrow = DOM.uid("arrow");
+  svg.append("defs").append("marker").attr("id", arrow.id).attr("viewBox", "0 0 10 10")
+    .attr("refX", 9).attr("refY", 5).attr("markerWidth", 7).attr("markerHeight", 7).attr("orient", "auto")
+    .append("path").attr("d", "M0,0L10,5L0,10z").attr("fill", "#222");
+  const layer = svg.append("g");
+  const caption = html`<p style="min-height: 6.5em; max-width: 560px"></p>`;
+  const show = (a, b) => {
+    const mv = move(a, b, f);
+    layer.selectAll("*").remove();
+    for (const [x2, y2] of mv.arrows)
+      layer.append("line").attr("x1", x.apply(mv.a)).attr("y1", y.apply(mv.b))
+        .attr("x2", x.apply(x2)).attr("y2", y.apply(y2)).attr("stroke", "#222").attr("stroke-width", 1.6)
+        .attr("marker-end", arrow);
+    layer.append("circle").attr("cx", x.apply(mv.a)).attr("cy", y.apply(mv.b)).attr("r", 3.5).attr("fill", "#222");
+    caption.innerHTML = mv.text;
+  };
+  const clamp = v => Math.max(0.002, Math.min(0.998, v));
+  svg.on("pointermove pointerdown", e => {
+    const [px, py] = d3.pointer(e);
+    show(clamp(x.invert(px)), clamp(y.invert(py)));
+  });
+  show(0.7, 0.6);
+  const swatch = (c, label) => html`<span style="display: inline-flex; align-items: center; gap: 0.3em; margin-right: 1em">
+    <span style="width: 0.9em; height: 0.9em; background: ${c}; border: 1px solid #555"></span>${label}</span>`;
+  return html`<div>${plot}<div style="font-size: 0.85em; margin: 0.3em 0 0.6em">
+    ${swatch(col.stop, "stop")}${swatch(col.a, "buyer a speaks")}${swatch(col.b, "buyer b speaks")}${swatch(red, "both take turns")}
+  </div>${caption}</div>`;
+}
+```
+
+## Reading the solution
+
+- **Grey: stop.** The beliefs are clear enough that another question is not worth its cost, and the good goes to the
+  buyer with the higher belief.
+- **Blue: one buyer speaks.** It is the buyer whose belief is further from 1/2. Their answer either settles the
+  question at once, or their belief drifts until it is as far from 1/2 as the other buyer's: onto a red path.
+- **Red: both buyers take turns.** On the lower diagonal both buyers look unlikely to value the good, and the
+  conversation is an *English auction*: each is asked in turn whether they would still buy, and the first "no" ends
+  it. On the upper diagonal both look likely to value it, and the conversation is a *Dutch auction*: the first "yes"
+  ends it. The short antidiagonal connects the two.
+- **The centre**, $\mu_a = \mu_b = 1/2$: a single yes/no question to one of the buyers decides the allocation.
+
+When communication is cheaper (lower $c$) the grey region shrinks, and the seller keeps the conversation going for
+longer before allocating the good.
