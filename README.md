@@ -23,6 +23,28 @@ quarto-live `{webr}` cells are listed in its `DESCRIPTION`). `.Rprofile` activat
 Interactive posts use [quarto-live](https://r-wasm.github.io/quarto-live/): `format: live-html`, `{webr}` cells, and the
 two includes at the top of the body (see the OHIE tutorial). `downloads: true` adds buttons: git (the post folder on GitHub) and `.ipynb`/`.qmd` zips with the data.
 
+## Quizzes and analytics
+
+A multiple-choice quiz in any post (rendered as a callout by `_partials/quiz.lua`):
+
+```markdown
+::: {.quiz #ask-first answer="Buyer b" title="Quiz: whom do we ask first?"}
+The question.
+
+- Buyer a
+- Buyer b
+
+::: {.quiz-answer}
+The explanation, shown once the reader picks an option.
+:::
+:::
+```
+
+Analytics: [Umami Cloud](https://cloud.umami.is), cookieless; the website ID is in `_partials/head.html`. Besides page
+views, `js/interactions.js` logs custom events without any code in the posts: each quiz's answers (`quiz-<id>`),
+quarto-live code cells (runs, hints, solutions, grades), copied code, downloads, plotly and Observable plots, and
+Observable inputs such as sliders. The full list is at the top of that file.
+
 ## Working locally
 
 ```sh
