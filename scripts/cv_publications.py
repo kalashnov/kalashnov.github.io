@@ -35,6 +35,7 @@ def main():
     papers = sorted(papers, key=lambda p: str(p.get("year") or ""), reverse=True)
     cv = yaml.load(ROOT / "cv" / "cv.yml")
     sections = cv["cv"]["sections"]
+    paper_sections = [t for t, v in sections.items() if isinstance(v, str)]
     for title, value in list(sections.items()):
         if isinstance(value, str):  # a status placeholder
             entries = [entry(p) for p in papers if p.get("status") == value]
@@ -51,6 +52,14 @@ def main():
          "--dont-generate-html", "--dont-generate-png"],
         check=True,
     )
+    # Web CV: the paper sections become one link to the Research page; the PDF keeps the full lists.
+    md = OUT / "cv.md"
+    parts = md.read_text().split("\n## ")
+    at = [i for i, s in enumerate(parts) if s.split("\n", 1)[0] in paper_sections]
+    if at:
+        parts[at[0]] = "Research\n\nPapers are listed on the [Research](publications.qmd) page.\n"
+        parts = [s for i, s in enumerate(parts) if i not in at[1:]]
+    md.write_text("\n## ".join(parts))
 
 
 if __name__ == "__main__":
