@@ -1,7 +1,6 @@
 ---
-title: "Tutorial: who to treat when costs are uncertain (OHIE, parametric model)"
+title: "Tutorial: Treatment Allocation under Uncertain Costs"
 date: 2026-11-15
-description: Fit the linear parametric priority score from the paper on the Oregon Health Insurance Experiment, in your browser.
 paper: W584E9VL # Zotero item key: this post is the paper's "tutorial" link on /publications/
 aliases: [/blog/2026/ohie-parametric-tutorial/, /blog/2026/treatment-allocation-under-uncertain-costs/]
 format: live-html
@@ -15,7 +14,7 @@ resources: [ohie.csv]   # made by make_data.R; also uploaded to webR's file syst
 {{< include /_extensions/r-wasm/live/_knitr.qmd >}}
 {{< include /_partials/prerun.qmd >}}
 
-In this tutorial, I demonstrate the method from from
+In this tutorial, I demonstrate the method from
 [Treatment Allocation under Uncertain Costs](https://arxiv.org/abs/2103.11066) on the
 [Oregon Health Insurance Experiment](https://www.nber.org/programs-projects/projects-and-centers/oregon-health-insurance-experiment) (OHIE).
 In 2008 Oregon allocated Medicaid by lottery. Medicaid improves self-reported health, but it also costs money:
@@ -50,11 +49,11 @@ interactive <- function(p) {  # ggplot -> zoomable plotly chart, legend below, t
 
 ## 1. The data
 
-I provide a prepared dataset, based on the public-use OHIE files. It contains pre-lottery characteristics (from the registration form, emergency-department records and the baseline survey), the lottery result, the outcome (self-reported health, from the endline survey) and the cost (the number of prescribed medications, counted only for lottery winners)
+I provide a prepared dataset, based on the public-use OHIE files. It contains pre-lottery characteristics (from the registration form, emergency-department records and the baseline survey), the lottery result, the outcome (self-reported health, from the endline survey) and the cost (the number of prescribed medications, counted only for lottery winners).
 
-The dataset also includes pre-built predictions of outcomes based on pretreatment characteristics, which we will use to reduce noise in the analysis. These are included to avoid the need to fit a separate model for the predictions in this short demo. 
+The dataset also includes pre-built predictions of outcomes based on pre-treatment characteristics, which we will use to reduce noise in the analysis. These are included to avoid the need to fit a separate model for the predictions in this short demo.
 
-The experiment is randomized, but the chances of winning are confounded with the household size: Medicaid applies to all family members, while the lottery registrations are individual, so members of larger households have a better chance of getting treated. So, first thing we'll do after loading the data, is we will compute these propensities:
+The experiment is randomized, but the chances of winning are confounded with household size: Medicaid applies to all family members, while lottery registration is individual, so members of larger households have a better chance of getting treated. So the first thing we do after loading the data is compute these propensities:
 
 ```{webr}
 #| label: load
@@ -63,7 +62,7 @@ d$prob <- ave(d$W, d$hhsize)
 data.frame(hhsize = table(d$hhsize), prob = round(tapply(d$W, d$hhsize, mean), 3))
 ```
 
-We now load the data and also split it into a training set and a test set. First, since the household is treated in it's entirety, we will put the whole household in the same set. Further, I suggest splitting in a stratified way, to reduce unnecessary noise in the evaluation. Each fold will recieve half of the households, stratified by household size and lottery result:
+We now split the data into a training set and a test set. First, since a household is treated in its entirety, we put the whole household in the same set. Further, I suggest splitting in a stratified way to reduce unnecessary noise in the evaluation. Each set receives half of the households, stratified by household size and lottery result:
 
 ```{webr}
 #| label: split
@@ -103,7 +102,7 @@ forest <- instrumental_forest(
 test$score <- predict(forest, as.matrix(test[grep("^X\\.", names(test))]))$predictions
 ```
 
-We, however, also propose a more lightweight alternative: a linear parametric model, which we will use in this tutorial. After a bit of feature selection, the linear version works as well as the forest version on this dataset. The idea is to run a linear regression of $(Y - \hat{Y})$ on $(C - \hat{C})X$, instrumenting for $(W - \hat{W})X$, which will work well under linearity assumption: $\rho(x) = x^\top \beta$. Notice, that we also improve the estimates by residualizing, using our best prediction of the outcomes:
+We also propose a more lightweight alternative: a linear parametric model, which we will use in this tutorial. After a bit of feature selection, the linear version works as well as the forest version on this dataset. The idea is to run a linear regression of $(Y - \hat{Y})$ on $(C - \hat{C})X$, with $(W - \hat{W})X$ as instruments, which works well under the linearity assumption: $\rho(x) = x^\top \beta$. Notice that we also improve the estimates by residualizing on our best predictions of the outcome and the cost:
 
 ```{webr}
 #| label: fit
@@ -121,12 +120,12 @@ summary(test$score)
 
 ## 3. How well does the ranking work?
 
-Now, we turn to evaluating the model. For evaluation we plot the QINI curve. The curve shows, how large would the health improvement per subject be, against the budget per subject spent. We construct this curve with the help of pseudo-outcomes: 
+Now, we turn to evaluating the model. For evaluation, we plot the QINI curve. The curve shows how large the health improvement per person would be against the budget spent per person. We construct this curve with the help of pseudo-outcomes:
 
 $$\Gamma_{Y,i} = \left(\frac{W_i}{\hat W_i} - \frac{1 - W_i}{1 - \hat W_i}\right)(Y_i - \hat Y_i), \qquad
   \Gamma_{C,i} = \left(\frac{W_i}{\hat W_i} - \frac{1 - W_i}{1 - \hat W_i}\right) C_i.$$
 
-The curve itself is a cumulative sum of the pseudo-outcomes, ordered by the score.
+The curve itself is the cumulative sum of the pseudo-outcomes, with people ordered by the score.
 
 
 ```{webr}
@@ -142,7 +141,7 @@ qini <- function(df, score) {
 curve <- qini(test, test$score)
 ```
 
-It is sensible to compare the rule against random allocation: which is shown by the dashed line.
+It is sensible to compare the rule with random allocation, which is shown by the dashed line.
 
 ```{webr}
 #| label: curve
@@ -157,9 +156,9 @@ interactive(p)
 
 Suppose we are willing to spend one medication per person. Then ordering by the score raises the share of healthy people by 0.0358, while random allocation achieves only 0.0232, a gain of 0.0125.
 
-## 4. Confidence intervals.
+## 4. Confidence intervals
 
-We also show that the confidence intervals could be constructed with resampling. Two things to keep in mind. First, we are interested in the comparison of the two rules, so we will construct the confidence intervals for the difference between the two rules. Second, in order of their score until the budget runs out. This is what the `lift` function does.
+We also show how confidence intervals can be constructed by resampling. There are two things to keep in mind. First, we are interested in the comparison of the two rules, so we will construct the confidence intervals for the difference between the two rules. Second, in each redrawn sample we treat people in order of their score until the budget runs out. This is what the `lift` function does.
 
 ```{webr}
 #| label: bootstrap
@@ -180,7 +179,7 @@ boot <- replicate(1000, {
 band <- data.frame(budget = budgets, delta = lift(curve, budgets), se = apply(boot, 1, sd))
 ```
 
-Finally, we plot the gain over random targeting, with the 95% confidence interval.
+Finally, we plot the gain over random targeting, with pointwise 95% confidence intervals.
 
 ```{webr}
 #| label: band
