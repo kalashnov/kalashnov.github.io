@@ -1,2 +1,0 @@
-# data preparation needs the full replication pipeline, not part of this post's environment
-make_data.R

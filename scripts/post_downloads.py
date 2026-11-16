@@ -3,6 +3,8 @@
 For posts/<slug>/index.qmd it writes into the built site, next to the post's data files:
   <slug>.qmd    plain R version for RStudio ({webr} cells -> {r}, no quarto-live lines)
   <slug>.ipynb  the same, rendered by Quarto to a Jupyter notebook with outputs (R kernel)
+  renv files    renv.lock, .Rprofile, renv/activate.R, renv/settings.json: R in that folder installs renv
+                and offers renv::restore() of the post's package versions
 The site is deployed to the gh-pages branch, where the buttons (_partials/downloads.lua) link to them.
 """
 import json
@@ -17,6 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = pathlib.Path(os.environ.get("QUARTO_PROJECT_OUTPUT_DIR", ROOT / "_site"))
 if not SITE.is_absolute():
     SITE = ROOT / SITE
+RENV_FILES = ["renv.lock", ".Rprofile", "renv/activate.R", "renv/settings.json"]
 
 
 def plain_qmd(text):
@@ -53,4 +56,8 @@ for index in sorted(ROOT.glob("posts/*/index.qmd")):
     qmd = plain_qmd(text)
     (out / f"{slug}.qmd").write_text(qmd)
     (out / f"{slug}.ipynb").write_text(notebook(index.parent, qmd, slug))
+    for f in RENV_FILES:
+        if (index.parent / f).exists():
+            (out / f).parent.mkdir(exist_ok=True)
+            shutil.copy(index.parent / f, out / f)
     print(f"downloads: {out.relative_to(SITE)}/{slug}.qmd, .ipynb")
