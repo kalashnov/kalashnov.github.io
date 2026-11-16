@@ -21,7 +21,7 @@ during the deploy and published on the `gh-pages` branch.
 Each post with R code has its own [renv](https://rstudio.github.io/renv/) in its folder (`renv.lock`; packages used in
 quarto-live `{webr}` cells are listed in its `DESCRIPTION`). `.Rprofile` activates the renv of the post being rendered.
 Interactive posts use [quarto-live](https://r-wasm.github.io/quarto-live/): `format: live-html`, `{webr}` cells, and the
-two includes at the top of the body (see the OHIE tutorial). `downloads: true` adds `.qmd`/`.ipynb` download buttons.
+two includes at the top of the body (see the OHIE tutorial). `downloads: true` adds buttons: git (the post folder on GitHub) and `.ipynb`/`.qmd` zips with the data.
 
 ## Working locally
 

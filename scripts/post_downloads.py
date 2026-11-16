@@ -5,6 +5,9 @@ For posts/<slug>/index.qmd it writes into the built site, next to the post's dat
   <slug>.ipynb  the same, rendered by Quarto to a Jupyter notebook with outputs (R kernel)
   renv files    renv.lock, .Rprofile, renv/activate.R, renv/settings.json: R in that folder installs renv
                 and offers renv::restore() of the post's package versions
+  <slug>-qmd.zip    <slug>/ with the .qmd, the data and the renv files
+  <slug>-ipynb.zip  <slug>/ with the .ipynb, the data and renv.lock (no renv activation: Jupyter's R kernel
+                    is not interactive, so it could not restore and would hide the reader's own packages)
 The site is deployed to the gh-pages branch, where the buttons (_partials/downloads.lua) link to them.
 """
 import json
@@ -14,6 +17,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = pathlib.Path(os.environ.get("QUARTO_PROJECT_OUTPUT_DIR", ROOT / "_site"))
@@ -60,4 +64,11 @@ for index in sorted(ROOT.glob("posts/*/index.qmd")):
         if (index.parent / f).exists():
             (out / f).parent.mkdir(exist_ok=True)
             shutil.copy(index.parent / f, out / f)
-    print(f"downloads: {out.relative_to(SITE)}/{slug}.qmd, .ipynb")
+    data = [f.name for f in index.parent.iterdir() if f.is_file() and not f.name.startswith(".")
+            and f.name not in ("index.qmd", "DESCRIPTION", "renv.lock")]
+    renv = [f for f in RENV_FILES if (out / f).exists()]
+    for fmt, files in (("qmd", renv), ("ipynb", ["renv.lock"] if "renv.lock" in renv else [])):
+        with zipfile.ZipFile(out / f"{slug}-{fmt}.zip", "w", zipfile.ZIP_DEFLATED) as z:
+            for f in [f"{slug}.{fmt}", *data, *files]:
+                z.write(out / f, f"{slug}/{f}")
+    print(f"downloads: {out.relative_to(SITE)}/{slug}.qmd, .ipynb, -qmd.zip, -ipynb.zip")
