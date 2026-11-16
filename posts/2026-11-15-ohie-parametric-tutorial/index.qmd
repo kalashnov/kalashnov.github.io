@@ -8,6 +8,7 @@ webr:
   packages: [splitstackshape, ivreg, ggplot2, plotly]
 downloads: true   # .qmd and .ipynb download buttons, with the data
 resources: [ohie.csv]   # uploaded to webR's file system
+bibliography: references.bib
 ---
 
 {{< include /_extensions/r-wasm/live/_knitr.qmd >}}
@@ -48,7 +49,7 @@ interactive <- function(p) {  # ggplot -> zoomable plotly chart, legend below, t
 
 ## 1. The data
 
-We provide a prepared dataset, based on the public-use OHIE files. It contains pre-lottery characteristics (from the registration form, emergency-department records and the baseline survey), the lottery result, the outcome (self-reported health, from the endline survey) and the cost (the number of prescribed medications, counted only for lottery winners).
+We provide a prepared dataset, based on the OHIE public use data [@ohie_data; @finkelstein2012; @taubman2014]. It contains pre-lottery characteristics (from the registration form, emergency-department records and the baseline survey), the lottery result, the outcome (self-reported health, from the endline survey) and the cost (the number of prescribed medications, counted only for lottery winners).
 
 The dataset also includes pre-built predictions of outcomes based on pre-treatment characteristics, which we will use to reduce noise in the analysis. These are included to avoid the need to fit a separate model for the predictions in this short demo.
 
@@ -189,3 +190,4 @@ p2 <- ggplot(band, aes(budget, delta)) +
   labs(x = "Budget: prescribed medications per patient", y = "Gain over random targeting")
 interactive(p2)
 ```
+

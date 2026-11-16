@@ -28,7 +28,7 @@ RENV_FILES = ["renv.lock", ".Rprofile", "renv/activate.R", "renv/settings.json"]
 
 def plain_qmd(text):
     head, body = re.match(r"---\n(.*?)\n---\n(.*)", text, re.S).groups()
-    keep = [l for l in head.splitlines() if re.match(r"(title|date|description|author):", l)]
+    keep = [l for l in head.splitlines() if re.match(r"(title|date|description|author|bibliography):", l)]
     body = re.sub(r"^\{\{< include .*>\}\}\n", "", body, flags=re.M).replace("```{webr}", "```{r}")
     return "---\n" + "\n".join(keep) + "\n---\n" + body
 
@@ -69,6 +69,8 @@ for index in sorted(ROOT.glob("posts/*/index.qmd")):
     renv = [f for f in RENV_FILES if (out / f).exists()]
     for fmt, files in (("qmd", renv), ("ipynb", ["renv.lock"] if "renv.lock" in renv else [])):
         with zipfile.ZipFile(out / f"{slug}-{fmt}.zip", "w", zipfile.ZIP_DEFLATED) as z:
-            for f in [f"{slug}.{fmt}", *data, *files]:
+            for f in [f"{slug}.{fmt}", *files]:
                 z.write(out / f, f"{slug}/{f}")
+            for f in data:  # from the source folder: not every data file (e.g. a .bib) is copied into the site
+                z.write(index.parent / f, f"{slug}/{f}")
     print(f"downloads: {out.relative_to(SITE)}/{slug}.qmd, .ipynb, -qmd.zip, -ipynb.zip")
