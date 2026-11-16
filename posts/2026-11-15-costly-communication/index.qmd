@@ -17,32 +17,13 @@ A seller wants to give one good to whichever of two buyers values it more. Unlik
 - @zhong2022 and @georgiadisharris2026preparing show how time preferences or uncertainty introduce dynamics
 - I show how two players with private values must engage in dynamics to save on costs
 
-::: {.callout-note icon=false title="Quiz: whom do we ask first?"}
+::: {.quiz #ask-first answer="Buyer b" title="Quiz: whom do we ask first?"}
 Suppose $v_i \in \{0, 1\}$, $\mu^0_a = 0.6$, $\mu^0_b = 0.9$. Whom do we ask to extract information first?
 
-```{ojs}
-//| echo: false
-{
-  const verdict = html`<span class="ms-2"></span>`;
-  const answer = document.getElementById("toy-answer");
-  const buttons = ["a", "b"].map(who => {
-    // links, not <button>s: Quarto restyles every <button> (as the site's download buttons, which are links too)
-    const b = html`<a href="#" role="button" class="btn btn-sm btn-outline-primary me-2">Buyer ${who}</a>`;
-    b.onclick = e => {
-      e.preventDefault();
-      for (const o of buttons) o.className = "btn btn-sm btn-outline-primary me-2";
-      b.className = `btn btn-sm me-2 ${who === "b" ? "btn-success" : "btn-outline-danger"}`;
-      verdict.innerHTML = who === "b" ? "<b>Right.</b>" : "<b>Not quite:</b> ask buyer b.";
-      answer.classList.remove("d-none");
-      window.track?.("quiz", {question: "ask-first", answer: who});   // analytics: _partials/head.html
-    };
-    return b;
-  });
-  return html`<div class="my-2">${buttons}${verdict}</div>`;
-}
-```
+- Buyer a
+- Buyer b
 
-::: {#toy-answer .d-none}
+::: {.quiz-answer}
 After a low signal, the posterior is $\mu^1_b = 0.6$; after a high signal, buyer $b$ buys.
 
 **Intuition:** by asking the more certain type first, we save on elicitation costs for the other.
@@ -126,14 +107,6 @@ viewof c = Inputs.range([regions.c[0], regions.c[regions.c.length - 1]],
                         {step: 0.05, value: 0.5, label: "Cost, c"})
 ```
 
-```{ojs}
-//| echo: false
-// analytics (_partials/head.html): the cost the reader settles on, when they release the slider
-{
-  viewof c.addEventListener("change", () => window.track?.("plot-cost", {c: viewof c.value}));
-  return html``;   // nothing to show
-}
-```
 
 ```{ojs}
 //| echo: false
@@ -246,7 +219,6 @@ function move(a, b, f) {
   const clamp = v => Math.max(0.002, Math.min(0.998, v));
   svg.on("pointermove pointerdown", e => {
     const [px, py] = d3.pointer(e);
-    if (!window.plotExplored) window.track?.("plot-explore"), window.plotExplored = true;   // once per page view
     show(clamp(x.invert(px)), clamp(y.invert(py)));
   });
   show(0.7, 0.6);
