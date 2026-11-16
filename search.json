@@ -116,7 +116,7 @@
     "href": "posts/2026-11-15-ohie-parametric-tutorial/index.html",
     "title": "Tutorial: Treatment Allocation under Uncertain Costs",
     "section": "",
-    "text": "Download as:\n  .qmd\n  .ipynb\nIn this tutorial, we demonstrate the method from Treatment Allocation under Uncertain Costs on the Oregon Health Insurance Experiment (OHIE). In 2008 Oregon allocated Medicaid by lottery. Medicaid improves self-reported health, but it also costs money: people who get it take more prescription medications, and how many more varies from person to person. If coverage could only be given to some people, who should get it first?"
+    "text": "Download as:\n  git\n  .ipynb\n  .qmd\nIn this tutorial, we demonstrate the method from Treatment Allocation under Uncertain Costs on the Oregon Health Insurance Experiment (OHIE). In 2008 Oregon allocated Medicaid by lottery. Medicaid improves self-reported health, but it also costs money: people who get it take more prescription medications, and how many more varies from person to person. If coverage could only be given to some people, who should get it first?"
   },
   {
     "objectID": "posts/2026-11-15-ohie-parametric-tutorial/index.html#the-data",
