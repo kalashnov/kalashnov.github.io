@@ -20,7 +20,7 @@ $$
 
 where $\mu_i'$ is the designer's belief after the message. 
 
-## A miniaml example
+## A minimal example
 
 Previous rational inattention literature, e.g. @hebertRationalInattentionWhen shows that in a rational inattention model with a **single player** and **no time preferences**, the dynamic model is equivalent to a **static model**. Other research show how dynamics arise with **time preferences** or **uncertainty** (@zhongOptimalDynamicInformation2022 and @georgiadis-harrisPreparingAct2026). I show how two players with private values must engage in dynamics to save on costs. This observation is consistent with communication complexity literature, e.g. @bravermanInformationExactCommunication2012
 
@@ -41,16 +41,11 @@ After a low signal, the posterior is $\mu^1_b = 0.6$; after a high signal, buyer
 
 ## The problem
 
-Each buyer $i \in \{a, b\}$ values the good at $v_i \in \{0, 1\}$, independently of the other. The seller's
-knowledge about buyer $i$ is a single number, the belief $\mu_i = \Pr(v_i = 1)$. Each message a buyer sends updates
-that belief by Bayes' rule, and only one buyer speaks at a time. When the conversation stops, the good goes to the buyer
-with the higher belief. Communication costs $c$ times the reduction in the entropy of the beliefs, so the seller
-solves
+More generally, we may allow the agents to send messages in any order. Ignoring incentives for now, here I show, how the designer can compute the optimal dynamic mechanism. The designer's problem is to maximize the expected value of the good minus the expected cost of communication:
 
 $$
 V(\mu_a, \mu_b) = \max_{\text{conversation}}\
 \mathbb{E}\Big[\max\{\mu_a^\tau, \mu_b^\tau\} - c \sum_{i \in \{a,b\}} \big(H(\mu_i) - H(\mu_i^\tau)\big)\Big],
-\qquad H(\mu) = -\mu \ln \mu - (1-\mu) \ln (1-\mu),
 $$
 
 where $\mu_i^\tau$ is the belief when the conversation ends. (In the paper, transfers make this welfare maximization
