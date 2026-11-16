@@ -2,13 +2,12 @@
 title: "Tutorial: Treatment Allocation under Uncertain Costs"
 date: 2026-11-15
 paper: W584E9VL # Zotero item key: this post is the paper's "tutorial" link on /publications/
-aliases: [/blog/2026/ohie-parametric-tutorial/, /blog/2026/treatment-allocation-under-uncertain-costs/]
 format: live-html
 engine: knitr
 webr:
   packages: [splitstackshape, ivreg, ggplot2, plotly]
 downloads: true   # .qmd and .ipynb download buttons, with the data
-resources: [ohie.csv]   # made by make_data.R; also uploaded to webR's file system
+resources: [ohie.csv]   # uploaded to webR's file system
 ---
 
 {{< include /_extensions/r-wasm/live/_knitr.qmd >}}
