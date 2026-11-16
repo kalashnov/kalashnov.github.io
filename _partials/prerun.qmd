@@ -3,13 +3,16 @@
 # Pre-run outputs for quarto-live: each {webr} cell is also run here, at render time, and its output
 # is placed under the cell, so readers see results before (and without) running anything in the
 # browser. Pressing Run in a cell hides its pre-run output in favour of the live one.
+# Each labelled cell is wrapped in <div data-cell="label">, so analytics (js/interactions.js) can name it.
 knitr::knit_engines$set(webr = function(options) {
   live <- knitr:::one_string(c("```{webr}", options$yaml.code, options$code, "```"))
   hidden <- any(grepl("include:\\s*false", options$yaml.code))
   out <- knitr::knit_child(text = c("```{r}", "#| echo: false", options$code, "```"),
                            envir = globalenv(), quiet = TRUE)
-  if (hidden || !grepl("cell-output", out)) return(live)   # nothing printed: no pre-run block
-  knitr:::one_string(c(live, "", "::: {.prerun}", out, ":::"))
+  block <- if (hidden || !grepl("cell-output", out)) live   # nothing printed: no pre-run block
+           else knitr:::one_string(c(live, "", "::: {.prerun}", out, ":::"))
+  if (grepl("^unnamed-chunk", options$label)) return(block)
+  knitr:::one_string(c(sprintf('::: {data-cell="%s"}', options$label), block, ":::"))
 })
 ```
 
