@@ -1,0 +1,58 @@
+/* Research page and paper lists (_partials/papers.ejs). Colours come from the Bootstrap variables,
+   which the light/dark theme stylesheets set, so this works in both modes. */
+.publications { margin-top: 2rem; }
+
+/* sections: show one view at a time, hide empty ones, clear break before the next non-first one */
+.publications:not(.sort-field) .by-field,
+.publications.sort-field .by-status,
+.pub-section:not(:has(.paper)) { display: none; }
+.publications h2 { border-bottom: 0; margin-top: 0; margin-bottom: 1rem; }
+.publications .quarto-listing { padding-bottom: 0; }
+.pub-section:has(.paper) ~ .pub-section > h2:first-child { margin-top: 3.5rem; }
+
+/* "sort by  status  field": plain text, same look as the paper links */
+.sort-toggle { color: #828282; margin-bottom: 1.5rem; }
+.sort-toggle button, .paper .abstract-toggle {
+  background: none; border: 0; padding: 0; font: inherit;
+  color: var(--bs-link-color); cursor: pointer;
+}
+.sort-toggle button { margin-left: 0.75rem; }
+.sort-toggle button[aria-pressed="true"] {
+  color: var(--bs-body-color); text-decoration: underline; text-underline-offset: 0.25em;
+}
+
+/* one paper, economist-style: text on the left, picture on the right */
+.paper { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+.paper-text { flex: 1; min-width: 0; }
+.paper .title { font-weight: 600; }
+.paper .title a { color: var(--bs-body-color); font-weight: inherit; text-decoration: none; }
+.paper .title a:hover { color: var(--bs-link-color); }
+.paper .meta { color: #828282; }
+.paper .meta em { color: var(--bs-body-color); }
+.paper .meta a { color: inherit; text-decoration: none; border-bottom: 1px dashed #828282; }
+.paper .meta a:hover { border-bottom-style: solid; }
+.paper .summary { margin-top: 0.25rem; }
+.paper .links { margin-top: 0.25rem; font-size: 0.9rem; }
+.paper .links > * { margin-right: 0.9rem; }
+.paper .links a { color: var(--bs-link-color); }
+.paper .scholar-badge img { height: 1.1rem; vertical-align: -0.2rem; }
+.paper .abstract p { margin: 0.5rem 0 0; }
+
+/* picture column: the widths of al-folio's col-4 col-sm-3 col-md-2 */
+.paper-preview { flex: 0 0 calc(16.667% - 1.25rem); margin: 0; position: relative; align-self: flex-start; }
+@media (max-width: 767.98px) { .paper-preview { flex-basis: calc(25% - 1.125rem); } }
+@media (max-width: 575.98px) { .paper-preview { flex-basis: calc(33.333% - 1rem); } }
+.paper-preview img { display: block; width: 100%; border-radius: 0.375rem; cursor: zoom-in; transition: box-shadow 0.15s ease; }
+
+/* subtle hint that pictures can be enlarged: a faint expand icon in the corner (clearer on hover), soft shadow */
+.paper-preview::after {
+  content: ""; position: absolute; right: 4px; bottom: 4px; width: 12px; height: 12px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cpolyline points='9 21 3 21 3 15'/%3E%3Cline x1='21' y1='3' x2='14' y2='10'/%3E%3Cline x1='3' y1='21' x2='10' y2='14'/%3E%3C/svg%3E") no-repeat center / contain;
+  opacity: 0.3; pointer-events: none; transition: opacity 0.15s ease;
+}
+.paper-preview:hover::after { opacity: 0.75; }
+.paper-preview:hover img { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+
+/* js/zoom.js: overlay in the page background colour, slightly transparent */
+.medium-zoom-overlay { background: color-mix(in srgb, var(--bs-body-bg) 93%, transparent) !important; }
+.medium-zoom-overlay, .medium-zoom-image--opened { z-index: 999; }

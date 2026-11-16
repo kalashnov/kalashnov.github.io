@@ -1,0 +1,182 @@
+---
+title: "Tutorial: Treatment Allocation under Uncertain Costs"
+date: 2026-11-15
+---
+
+
+In this tutorial, we demonstrate the method from
+[Treatment Allocation under Uncertain Costs](https://arxiv.org/abs/2103.11066) on the
+[Oregon Health Insurance Experiment](https://www.nber.org/programs-projects/projects-and-centers/oregon-health-insurance-experiment) (OHIE).
+In 2008 Oregon allocated Medicaid by lottery. Medicaid improves self-reported health, but it also costs money:
+people who get it take more prescription medications, and how many more varies from person to person.
+If coverage could only be given to some people, who should get it first?
+
+
+```{r}
+#| label: setup
+#| include: false
+# plotting conventions used by every chart below
+library(ggplot2)
+theme_set(theme_minimal(base_size = 13))
+update_geom_defaults("line", list(linewidth = 0.8))
+score_colour <- "#1f77b4"   # ordering by the score; random targeting is a dashed black line
+options(ggplot2.discrete.colour = c(score_colour, "black"))   # groups: first blue, second black
+interactive <- function(p) {  # ggplot -> zoomable plotly chart, legend below, tidy hover text
+  g <- plotly::plotly_build(plotly::ggplotly(p))
+  tidy <- function(s) {   # "cost: 0.0006994349<br />rule: a<br />rule: a" -> "cost: 0.000699<br />rule: a"
+    m <- gregexpr("-?[0-9]*\\.[0-9]+(e-?[0-9]+)?", s)
+    regmatches(s, m) <- lapply(regmatches(s, m), function(x)
+      vapply(signif(as.numeric(x), 3), format, "", scientific = FALSE, drop0trailing = TRUE))
+    vapply(strsplit(s, "<br />", fixed = TRUE), function(l) paste(unique(l), collapse = "<br />"), "")
+  }
+  g$x$data <- lapply(g$x$data, function(trace) {
+    if (!is.null(trace$text)) trace$text <- tidy(trace$text)
+    trace
+  })
+  g |> plotly::layout(legend = list(orientation = "h", y = -0.25))
+}
+```
+
+## 1. The data
+
+We provide a prepared dataset, based on the public-use OHIE files. It contains pre-lottery characteristics (from the registration form, emergency-department records and the baseline survey), the lottery result, the outcome (self-reported health, from the endline survey) and the cost (the number of prescribed medications, counted only for lottery winners).
+
+The dataset also includes pre-built predictions of outcomes based on pre-treatment characteristics, which we will use to reduce noise in the analysis. These are included to avoid the need to fit a separate model for the predictions in this short demo.
+
+The experiment is randomized, but the chances of winning are confounded with household size: Medicaid applies to all family members, while lottery registration is individual, so members of larger households have a better chance of getting treated. So the first thing we do after loading the data is compute these propensities:
+
+```{r}
+#| label: load
+d <- read.csv("ohie.csv")
+d$prob <- ave(d$W, d$hhsize)
+data.frame(hhsize = table(d$hhsize), prob = round(tapply(d$W, d$hhsize, mean), 3))
+```
+
+We now split the data into a training set and a test set. First, since a household is treated in its entirety, we put the whole household in the same set. Further, we suggest splitting in a stratified way to reduce unnecessary noise in the evaluation. Each set receives half of the households, stratified by household size and lottery result:
+
+```{r}
+#| label: split
+library(splitstackshape)
+set.seed(0)
+hh <- aggregate(cbind(prob, treatment = W) ~ household, data = d, FUN = mean)
+rownames(hh) <- hh$household
+picked <- stratified(hh[c("prob", "treatment")], group = c("prob", "treatment"),
+                     size = 0.5, keep.rownames = TRUE)$rn
+in_train <- d$household %in% as.integer(picked)
+train <- d[in_train, ]
+test  <- d[!in_train, ]
+cat(nrow(d), "people:", nrow(train), "to fit the model,", nrow(test), "held out to evaluate it\n")
+cat("share who won the lottery:", round(mean(d$W), 3), "\n")
+```
+
+## 2. Fit the priority score
+
+The main point of the paper is that if we want to take into account the uncertain costs of treatment, we should rank people according to the following ratio:
+
+$$\rho(x) = \frac{\mathbb{E}[Y(1) - Y(0) \mid X = x]}{\mathbb{E}[C(1) - C(0) \mid X = x]}
+           = \frac{\operatorname{Cov}[Y, W \mid X = x]}{\operatorname{Cov}[C, W \mid X = x]}.$$
+
+We propose to estimate this ratio using the [`grf`](https://grf-labs.github.io/grf/) package, specifically [`instrumental_forest()`](https://grf-labs.github.io/grf/reference/instrumental_forest.html):
+
+```r
+library(grf)
+forest <- instrumental_forest(
+  X = as.matrix(train[grep("^X\\.", names(train))]),
+  Y = train$health,
+  W = train$medication,
+  Z = train$W,
+  Y.hat = train$health.hat,
+  W.hat = train$medication.hat,
+  Z.hat = train$prob,
+  clusters = train$household)
+test$score <- predict(forest, as.matrix(test[grep("^X\\.", names(test))]))$predictions
+```
+
+We also propose a more lightweight alternative: a linear parametric model, which we will use in this tutorial. After a bit of feature selection, the linear version works as well as the forest version on this dataset. The idea is to run a linear regression of $(Y - \hat{Y})$ on $(C - \hat{C})X$, with $(W - \hat{W})X$ as instruments, which works well under the linearity assumption: $\rho(x) = x^\top \beta$. Notice that we also improve the estimates by residualizing on our best predictions of the outcome and the cost:
+
+```{r}
+#| label: fit
+library(ivreg)
+X <- as.matrix(d[grep("^X\\.", names(d))])
+fit_data <- data.frame(Y = train$health - train$health.hat,
+                       C = train$medication - train$medication.hat,
+                       W = train$W - train$prob,
+                       X = I(X[in_train, ]))
+model <- suppressWarnings(ivreg(Y ~ 0 + C + C:X | 0 + W + W:X, data = fit_data))
+
+test$score <- predict(model, data.frame(C = 1, W = 0, X = I(X[!in_train, ])))
+summary(test$score)
+```
+
+## 3. How well does the ranking work?
+
+Now, we turn to evaluating the model. For evaluation, we plot the QINI curve. The curve shows how large the health improvement per person would be against the budget spent per person. We construct this curve with the help of pseudo-outcomes:
+
+$$\Gamma_{Y,i} = \left(\frac{W_i}{\hat W_i} - \frac{1 - W_i}{1 - \hat W_i}\right)(Y_i - \hat Y_i), \qquad
+  \Gamma_{C,i} = \left(\frac{W_i}{\hat W_i} - \frac{1 - W_i}{1 - \hat W_i}\right) C_i.$$
+
+The curve itself is the cumulative sum of the pseudo-outcomes, with people ordered by the score.
+
+
+```{r}
+#| label: qini
+ipw <- test$W / test$prob - (1 - test$W) / (1 - test$prob)
+test$gain <- (test$health - test$health.hat) * ipw   # unbiased signal of each person's health gain
+test$cost <- test$medication * ipw                   # ... and of each person's extra medications
+# QINI curve: rank people by score and add up their gains and costs (per person in the sample)
+qini <- function(df, score) {
+  o <- order(-score)
+  data.frame(cost = cumsum(df$cost[o]), gain = cumsum(df$gain[o])) / nrow(df)
+}
+curve <- qini(test, test$score)
+```
+
+It is sensible to compare the rule with random allocation, which is shown by the dashed line.
+
+```{r}
+#| label: curve
+plot_data <- rbind(data.frame(curve[seq(1, nrow(curve), by = 10), ], rule = "order by score"),  # every 10th person
+                   data.frame(rbind(0, tail(curve, 1)), rule = "treat at random"))           # straight line from 0
+p <- ggplot(plot_data, aes(cost, gain, colour = rule, linetype = rule)) +
+  geom_line() +
+  labs(x = "Prescribed medications per patient", y = "Increase in share of healthy people",
+       colour = NULL, linetype = NULL)
+interactive(p)
+```
+
+Suppose we are willing to spend one medication per person. Then ordering by the score raises the share of healthy people by 0.0358, while random allocation achieves only 0.0232, a gain of 0.0125.
+
+## 4. Confidence intervals
+
+We also show how confidence intervals can be constructed by resampling. There are two things to keep in mind. First, we are interested in the comparison of the two rules, so we will construct the confidence intervals for the difference between the two rules. Second, in each redrawn sample we treat people in order of their score until the budget runs out. This is what the `lift` function does.
+
+```{r}
+#| label: bootstrap
+lift <- function(q, budgets) {
+  reached <- findInterval(budgets, rev(cummin(rev(q$cost))), left.open = TRUE)
+  total <- tail(q, 1)
+  c(0, q$gain)[reached + 1] - total$gain / total$cost * pmin(budgets, total$cost)
+}
+budgets <- sort(c(seq(0, tail(curve$cost, 1), length.out = 60), 1))
+
+# half-sample bootstrap, as in the paper: half of the households, without replacement
+households <- unique(test$household)
+set.seed(1)
+boot <- replicate(1000, {
+  keep <- test$household %in% sample(households, length(households) / 2)
+  lift(qini(test[keep, ], test$score[keep]), budgets)
+})
+band <- data.frame(budget = budgets, delta = lift(curve, budgets), se = apply(boot, 1, sd))
+```
+
+Finally, we plot the gain over random targeting, with pointwise 95% confidence intervals.
+
+```{r}
+#| label: band
+p2 <- ggplot(band, aes(budget, delta)) +
+  geom_ribbon(aes(ymin = delta - 1.96 * se, ymax = delta + 1.96 * se), fill = score_colour, alpha = 0.2) +
+  geom_line(colour = score_colour) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "Budget: prescribed medications per patient", y = "Gain over random targeting")
+interactive(p2)
+```

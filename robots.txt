@@ -1,4 +1,1 @@
-User-agent: *
-Disallow:
-
 Sitemap: https://kalashnov.github.io/sitemap.xml
