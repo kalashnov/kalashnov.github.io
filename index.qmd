@@ -1,6 +1,6 @@
 ---
 title: "Georgy Kalashnov"
-subtitle: "A researcher in Econometrics, Machine Learning, and Mechanism Design"
+subtitle: "PhD Candidate at UC San Diego"
 image: images/prof_pic.jpg
 about:
   template: trestles
