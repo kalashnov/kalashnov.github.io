@@ -8,14 +8,23 @@ bibliography: references.bib
 code-copy: false   # no code is shown; hidden cells would otherwise leave copy buttons
 ---
 
-A seller wants to give one good to whichever of two buyers values it more. Unlike the classical Vickrey setting, however, we will assume, that the information aquisition is costly for some reason. Skipping the detailed analysis of incentives for this tutorial, I show how this forces the optimal mechanism to be dynamic.
+A seller wants to give one good to whichever of two buyers values it more. Unlike the classical Vickrey setting, however, we will assume, that the information aquisition is costly for some reason. Skipping the detailed analysis of incentives for this tutorial, I show how this forces the optimal mechanism to be dynamic. Here I demonstrate on a model with two buyers, each with a private value $v_i \in \{0, 1\}$. 
 
-## A really toy example
+## Setting
 
-- @hebert2023rational show that in a rational inattention model with a **single player** and **no time preferences**,
-  the dynamic model is equivalent to a **static model**
-- @zhong2022 and @georgiadisharris2026preparing show how time preferences or uncertainty introduce dynamics
-- I show how two players with private values must engage in dynamics to save on costs
+Each buyer $i \in \{a, b\}$ values the good at $v_i \in \{0, 1\}$, independently of the other. The designer's belief about the buyers' types is therefore a pair of probabilities $(\mu_a, \mu_b)$, where $\mu_i = \Pr(v_i = 1)$. We allow each buyer to send messages that update the designer's belief about their types, however, for each message the buyer pays the expected reduction in uncertainty of the designer's belief (measured as entropy in this example):
+
+$$
+c\,\big(H(\mu_i) - \mathbb{E}[H(\mu_i')]\big), \qquad H(\mu) = -\mu \ln \mu - (1-\mu) \ln (1-\mu),
+$$
+
+where $\mu_i'$ is the designer's belief after the message. 
+
+## A miniaml example
+
+Previous rational inattention literature, e.g. @hebertRationalInattentionWhen shows that in a rational inattention model with a **single player** and **no time preferences**, the dynamic model is equivalent to a **static model**. Other research show how dynamics arise with **time preferences** or **uncertainty** (@zhongOptimalDynamicInformation2022 and @georgiadis-harrisPreparingAct2026). I show how two players with private values must engage in dynamics to save on costs. This observation is consistent with communication complexity literature, e.g. @bravermanInformationExactCommunication2012
+
+Here is a minimal example, demonstrating the reason for that:
 
 ::: {.quiz #ask-first answer="Buyer b" title="Quiz: whom do we ask first?"}
 Suppose $v_i \in \{0, 1\}$, $\mu^0_a = 0.6$, $\mu^0_b = 0.9$. Whom do we ask to extract information first?
