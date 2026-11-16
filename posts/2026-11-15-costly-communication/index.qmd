@@ -44,11 +44,23 @@ After a low signal, the posterior is $\mu^1_b = 0.6$; after a high signal, buyer
 More generally, we may allow the agents to send messages in any order. Ignoring incentives for now, here I show, how the designer can compute the optimal dynamic mechanism. The designer's problem is to maximize the expected value of the good minus the expected cost of communication:
 
 $$
-V(\mu_a, \mu_b) = \max_{\text{conversation}}\
-\mathbb{E}\Big[\max\{\mu_a^\tau, \mu_b^\tau\} - c \sum_{i \in \{a,b\}} \big(H(\mu_i) - H(\mu_i^\tau)\big)\Big],
+\max_{\text{conversation}}\
+\mathbb{E}\Big[\max\{\mu_a^\tau, \mu_b^\tau\} - c \sum_{i \in \{a,b\}} \big(H(\mu_i) - H(\mu_i^\tau)\big)\Big]
+= V(\mu_a, \mu_b) - c\big(H(\mu_a) + H(\mu_b)\big),
 $$
 
-where $\mu_i^\tau$ is the belief when the conversation ends. (In the paper, transfers make this welfare maximization
+where $\mu_i^\tau$ is the belief when the conversation ends. Since the cost telescopes, $V$ solves a recursive problem: at each state, the designer either stops or lets one buyer split their belief into $\mu'$ and $\mu''$ with $p\mu' + (1-p)\mu'' = \mu_i$:
+
+$$
+V(\mu_a, \mu_b) = \max
+\begin{cases}
+\max\{\mu_a, \mu_b\} + c\big(H(\mu_a) + H(\mu_b)\big) & \text{stop,} \\
+\max_{p,\, \mu', \mu''} \; p\, V(\mu', \mu_b) + (1-p)\, V(\mu'', \mu_b) & \text{ask } a, \\
+\max_{p,\, \mu', \mu''} \; p\, V(\mu_a, \mu') + (1-p)\, V(\mu_a, \mu'') & \text{ask } b.
+\end{cases}
+$$
+
+This is a bi-concavification problem: $V$ is the smallest function above the stopping payoff that is concave in each $\mu_i$ separately [@aumannBICONVEXITYBIMARTINGALESt]. (In the paper, transfers make this welfare maximization
 the outcome of the game between the buyers; here I only look at the optimization.)
 
 I solve the problem in continuous time with Pontryagin's maximum principle. At each moment one buyer is speaking.
