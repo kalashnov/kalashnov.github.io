@@ -12,17 +12,17 @@ A seller wants to give one good to whichever of two buyers values it more. Unlik
 
 ## Setting
 
-Each buyer $i \in \{a, b\}$ values the good at $v_i \in \{0, 1\}$, independently of the other. The designer's belief about the buyers' types is therefore a pair of probabilities $(\mu_a, \mu_b)$, where $\mu_i = \Pr(v_i = 1)$. We allow each buyer to send messages that update the designer's belief about their types, however, for each message the buyer pays the expected reduction in uncertainty of the designer's belief (measured as entropy in this example):
+Each buyer $i \in \{a, b\}$ values the good at $v_i \in \{0, 1\}$, independently of the other. The designer's belief about the buyers' types is therefore a pair of probabilities $(\mu_a, \mu_b)$, where $\mu_i = \Pr(v_i = 1)$. The designer starts at the prior $(\mu^0_a, \mu^0_b)$. We allow each buyer to send messages that update the designer's belief about their types, however, for each message the buyer pays the expected reduction in uncertainty of the designer's belief (measured as entropy in this example):
 
 $$
 c\,\big(H(\mu_i) - \mathbb{E}[H(\mu_i')]\big), \qquad H(\mu) = -\mu \ln \mu - (1-\mu) \ln (1-\mu),
 $$
 
-where $\mu_i'$ is the designer's belief after the message. 
+where $\mu_i'$ is the designer's belief after the message. This is called a Uniformly Posterior Seperable (UPS) cost. An important property of this cost function, is that it telescopes: it doesn't matter in what order do the buyers send messages, the only thing that matters from the cost is the final belief.
 
 ## A minimal example
 
-Previous rational inattention literature, e.g. @hebertRationalInattentionWhen shows that in a rational inattention model with a **single player** and **no time preferences**, the dynamic model is equivalent to a **static model**. Other research show how dynamics arise with **time preferences** or **uncertainty** (@zhongOptimalDynamicInformation2022 and @georgiadis-harrisPreparingAct2026). I show how two players with private values must engage in dynamics to save on costs. This observation is consistent with communication complexity literature, e.g. @bravermanInformationExactCommunication2012
+Previous rational inattention literature, e.g. @hebertRationalInattentionWhen shows that in a rational inattention model with a **single player** and **no time preferences**, the dynamic model is equivalent to a **static model**, which is a consequence of the UPS cost: the dynamics doesn't matter, only the final belief matters. Other research show how dynamics arise with **time preferences** or **uncertainty** [@zhongOptimalDynamicInformation2022; @georgiadis-harrisPreparingAct2026]. I show how two players with private values must engage in dynamics to save on costs. This observation is consistent with communication complexity literature, e.g. @bravermanInformationExactCommunication2012
 
 Here is a minimal example, demonstrating the reason for that:
 
@@ -39,39 +39,36 @@ After a low signal, the posterior is $\mu^1_b = 0.6$; after a high signal, buyer
 :::
 :::
 
-## The problem
+## The 2x2 states solution
 
-More generally, we may allow the agents to send messages in any order. Ignoring incentives for now, here I show, how the designer can compute the optimal dynamic mechanism. The designer's problem is to maximize the expected value of the good minus the expected cost of communication:
+More generally, we may allow the agents to send messages in any order, until the designer decides to stop at time $\tau$. Ignoring incentives for now, here I show, how the designer can compute the optimal dynamic mechanism. The designer's problem is to maximize the expected value of the good minus the expected cost of communication[^const]:
 
 $$
-\max_{\text{conversation}}\
+V(\mu_a, \mu_b) = \max_{\text{conversation}}\
 \mathbb{E}\Big[\max\{\mu_a^\tau, \mu_b^\tau\} - c \sum_{i \in \{a,b\}} \big(H(\mu_i) - H(\mu_i^\tau)\big)\Big]
-= V(\mu_a, \mu_b) - c\big(H(\mu_a) + H(\mu_b)\big),
++ c\big(H(\mu_a) + H(\mu_b)\big),
 $$
 
-where $\mu_i^\tau$ is the belief when the conversation ends. Since the cost telescopes, $V$ solves a recursive problem: at each state, the designer either stops or lets one buyer split their belief into $\mu'$ and $\mu''$ with $p\mu' + (1-p)\mu'' = \mu_i$:
+[^const]: The term $c\big(H(\mu_a) + H(\mu_b)\big)$ is a constant that does not depend on the mechanism.
+
+where $\mu_i^\tau$ is the belief when the conversation ends. What sets this model apart from other rational inattention models is that no single experiment can reveal information about both $v_a$ and $v_b$ at once: each message is sent by one buyer and is informative only about that buyer's own value. One could encode this restriction in a joint cost function over signals about $(v_a, v_b)$ by making any signal that depends on both values infinitely costly. That cost function, however, is no longer UPS. 
+
+If only buyer $a$ could speak, then with a UPS cost the problem would be solved by concavification: the value is the smallest function $\operatorname{cav}_a f$ concave in $\mu_a$, that lies above the stopping value $f= \max\{\mu_a, \mu_b\} + c\big(H(\mu_a) + H(\mu_b)\big)$. The designer can do better than stopping by asking buyer $a$ to split the belief $\mu_a$ into two posteriors that average back to $\mu_a$; the value then becomes the probability-weighted average of the values at those posteriors. With two players, the problem is a bi-concavification problem [@aumannBICONVEXITYBIMARTINGALESt]. The optimal value function is the smallest function aboce $f$, that is concave in each $\mu_i$ separately:
 
 $$
 V(\mu_a, \mu_b) = \max
 \begin{cases}
 \max\{\mu_a, \mu_b\} + c\big(H(\mu_a) + H(\mu_b)\big) & \text{stop,} \\
-\max_{p,\, \mu', \mu''} \; p\, V(\mu', \mu_b) + (1-p)\, V(\mu'', \mu_b) & \text{ask } a, \\
-\max_{p,\, \mu', \mu''} \; p\, V(\mu_a, \mu') + (1-p)\, V(\mu_a, \mu'') & \text{ask } b.
+(\operatorname{cav}_a V)(\mu_a, \mu_b) & \text{ask } a, \\
+(\operatorname{cav}_b V)(\mu_a, \mu_b) & \text{ask } b.
 \end{cases}
 $$
 
-This is a bi-concavification problem: $V$ is the smallest function above the stopping payoff that is concave in each $\mu_i$ separately [@aumannBICONVEXITYBIMARTINGALESt]. (In the paper, transfers make this welfare maximization
-the outcome of the game between the buyers; here I only look at the optimization.)
+The optimal solution can then be computed by iterating the bi-concavification operator until convergence. 
 
-I solve the problem in continuous time with Pontryagin's maximum principle. At each moment one buyer is speaking.
-Their answer can settle the question at once: the belief jumps to a point where it is optimal to stop. Otherwise the
-belief drifts a little, and the conversation goes on.
+## The mechanism
 
-## Who speaks, and where the beliefs go
-
-The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it (or tap) to see what happens at that state:
-arrows to the boundary are answers that end the conversation; the other arrows show where the beliefs drift while it continues.
-The slider changes the cost of communication $c$.
+The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it (or tap) to see what happens at that state: the arrows show optimal experiment to be run.
 
 ```{python}
 #| echo: false
@@ -150,14 +147,12 @@ function move(a, b, f) {
   const jump = (i, a, b) => i === "a" ? [a > 0.5 ? f.n(b) : f.k(b), b] : [a, b > 0.5 ? f.n(a) : f.k(a)];
   const winner = (i, m) => (m > 0.5 ? i : other(i));   // jumping up wins the good, jumping down hands it over
   if (a > f.n(b) || b > f.n(a))
-    return {a, b, arrows: [], text: `<b>Stop.</b> Given the cost, the beliefs are clear enough: the good goes to
-      buyer ${a >= b ? "a" : "b"}.`};
+    return {a, b, arrows: [], text: `<b>Stop.</b> Given the cost, the good goes to buyer ${a >= b ? "a" : "b"}.`};
   if (Math.hypot(a - 0.5, b - 0.5) < 2 * near) {
     const lo = f.k(0.5), hi = f.n(0.5);
     return {a: 0.5, b: 0.5, arrows: [[lo, 0.5], [hi, 0.5], [0.5, lo], [0.5, hi]],
-      text: `<b>The start.</b> One buyer, chosen at random, answers a single yes/no question that moves their belief
-        from 0.5 to ${r(hi)} or ${r(lo)}, and the conversation ends: "yes" and they get the good, "no" and the
-        other buyer does.`};
+      text: `<b>The start.</b> One buyer, chosen at random, answers a single yes/no: "yes" and they get the good,
+        "no" and the other buyer does.`};
   }
   const towards = (a, b, d) => {   // drift along a red path, towards the centre
     const s = Math.min(d, Math.hypot(a - 0.5, b - 0.5)) / Math.hypot(a - 0.5, b - 0.5);
@@ -166,27 +161,27 @@ function move(a, b, f) {
   if (Math.abs(a - b) < near) {
     const m = (a + b) / 2, english = m < 0.5;
     return {a: m, b: m, arrows: [jump("a", m, m), jump("b", m, m), towards(m, m, 0.03)],
-      text: `<b>${english ? "English" : "Dutch"} auction.</b> The buyers take turns. Each answer can end the
-        conversation: ${english
-          ? `a buyer whose belief drops to ${r(f.k(m))} drops out, and the other buyer gets the good`
-          : `a buyer whose belief rises to ${r(f.n(m))} claims the good`}. Until then both beliefs drift
+      text: `<b>${english ? "English" : "Dutch"} auction.</b> The buyers take turns in a clock auction with
+        infinitesimal steps. Each answer can end the conversation: ${english
+          ? "after one of the buyers decides to stop, the other gets the good"
+          : "after one of the buyers decides to buy, they get the good"}. Until then both beliefs drift
         ${english ? "up" : "down"} together towards 0.5.`};
   }
   if (Math.abs(a + b - 1) < near && Math.max(a, b) <= f.mstar) {
     const m = (a - b + 1) / 2, hi = m > 0.5 ? "a" : "b", lo = other(hi);
     return {a: m, b: 1 - m, arrows: [jump("a", m, 1 - m), jump("b", m, 1 - m), towards(m, 1 - m, 0.03)],
-      text: `<b>Both buyers speak.</b> The buyers take turns. Either answer ends the conversation in favour of
-        buyer ${hi}: buyer ${hi} claims the good, or buyer ${lo} drops out. Until then the two beliefs drift
-        towards 0.5.`};
+      text: `<b>Clock auction.</b> The buyers take turns in a clock auction with infinitesimal steps. Each answer
+        can end the conversation in favour of buyer ${hi}: after buyer ${hi} decides to buy, or after buyer ${lo}
+        decides to stop. Until then the two beliefs drift towards 0.5.`};
   }
   const i = Math.abs(a - 0.5) > Math.abs(b - 0.5) ? "a" : "b";
   const mi = i === "a" ? a : b, mo = i === "a" ? b : a;
   const target = 0.5 + Math.sign(mi - 0.5) * Math.abs(mo - 0.5);   // where i's belief meets a red path
   const [ja, jb] = jump(i, a, b);
   return {a, b, arrows: [[ja, jb], i === "a" ? [target, b] : [a, target]],
-    text: `<b>Buyer ${i} speaks</b>, buyer ${other(i)} is silent. Either buyer ${i}'s answer settles it:
-      ${mu(i)} jumps to ${r(i === "a" ? ja : jb)} and the good goes to buyer ${winner(i, mi)}. Or ${mu(i)} drifts
-      to ${r(target)}, onto a red path, where both buyers start taking turns.`};
+    text: `<b>Buyer ${i} sends a signal.</b> Either buyer ${i} decides to ${mi > 0.5 ? "buy and receives the good"
+      : `stop and buyer ${other(i)} receives the good`}, or we transfer to the ${(mi - 0.5) * (mo - 0.5) < 0 ? "clock"
+      : mo > 0.5 ? "Dutch" : "English"} auction.`};
 }
 ```
 
@@ -245,18 +240,3 @@ function move(a, b, f) {
   </div>${caption}</div>`;
 }
 ```
-
-## Reading the solution
-
-- **Grey: stop.** The beliefs are clear enough that another question is not worth its cost, and the good goes to the
-  buyer with the higher belief.
-- **Blue: one buyer speaks.** It is the buyer whose belief is further from 1/2. Their answer either settles the
-  question at once, or their belief drifts until it is as far from 1/2 as the other buyer's: onto a red path.
-- **Red: both buyers take turns.** On the lower diagonal both buyers look unlikely to value the good, and the
-  conversation is an *English auction*: each is asked in turn whether they would still buy, and the first "no" ends
-  it. On the upper diagonal both look likely to value it, and the conversation is a *Dutch auction*: the first "yes"
-  ends it. The short antidiagonal connects the two.
-- **The centre**, $\mu_a = \mu_b = 1/2$: a single yes/no question to one of the buyers decides the allocation.
-
-When communication is cheaper (lower $c$) the grey region shrinks, and the seller keeps the conversation going for
-longer before allocating the good.
