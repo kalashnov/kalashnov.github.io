@@ -10,6 +10,11 @@
 //   plot-hover / plot-zoom / plot-legend {plot}   plotly charts, the first time per chart and page view
 //   plot-explore      {plot}                   an Observable plot pointed at, the first time per page view
 //   input             {input, value}           an Observable input changed (sliders: on release)
+//   runtime-ready     {engine, total, page, runtime, packages, data, setup, network}   quarto-live became ready to
+//                     run code: seconds since the page opened; page = before quarto-live started; then per startup
+//                     stage (download of webR/Pyodide, installing the packages, data files, setup); network type
+//   runtime-abandoned {engine, stage, total, network}   the reader left before it was ready
+//   runtime-error     {engine, message}        startup failed
 // Elements are numbered in page order ("cell": 2 is the page's second quarto-live cell).
 (() => {
   const track = (name, data) => window.umami?.track(name, data);
@@ -81,6 +86,40 @@
   let queued = false;   // at most one scan per frame, however much the page changes
   new MutationObserver(() => queued || (queued = true, requestAnimationFrame(() => (queued = false, hookPlotly()))))
     .observe(document.documentElement, {childList: true, subtree: true});
+  // quarto-live startup, timed from its own status line (#exercise-loading-status), which reads "Downloading webR",
+  // "Downloading package: X", "Downloading resource: Y", ... and disappears once code can run
+  const STAGES = [[/^Downloading (webR|Pyodide)/, "runtime"], [/^Downloading package/, "packages"],
+                  [/^Downloading resource/, "data"], [/^(Initialise|Installing webR shims|.* environment setup)$/, "setup"]];
+  const startup = {engine: null, stage: null, since: 0, start: null, times: {}, done: false};
+  const secs = (ms) => Math.round(ms / 100) / 10;
+  const network = () => navigator.connection?.effectiveType || "unknown";   // Chromium only
+  const lap = (now) => startup.stage && (startup.times[startup.stage] = (startup.times[startup.stage] || 0) + now - startup.since);
+  const finish = (name, data) => {
+    if (startup.done || !startup.engine) return;
+    startup.done = true;
+    track(name, {engine: startup.engine, ...data});
+  };
+  const watchStartup = () => {
+    const status = document.getElementById("exercise-loading-status");
+    if (!status) return;   // no quarto-live cells on this page
+    new MutationObserver(() => {
+      const now = performance.now(), text = status.querySelector(".exercise-loading-details")?.textContent.trim();
+      if (!text) {   // the status line is gone: ready
+        lap(now);
+        const times = Object.fromEntries(Object.entries(startup.times).map(([k, ms]) => [k, secs(ms)]));
+        return finish("runtime-ready", {total: secs(now), page: secs(startup.start ?? now), ...times, network: network()});
+      }
+      startup.start ??= now;
+      startup.engine ||= /Pyodide/.test(text) ? "pyodide" : /webR/.test(text) ? "webr" : null;
+      const stage = (STAGES.find(([re]) => re.test(text)) || [, "error"])[1];
+      if (stage === "error") return finish("runtime-error", {message: text.slice(0, 100)});
+      if (stage !== startup.stage) lap(now), Object.assign(startup, {stage, since: now});
+    }).observe(status, {childList: true, subtree: true, characterData: true});
+    // ponytail: best effort, an event sent while the page closes can be lost
+    addEventListener("pagehide", () => finish("runtime-abandoned", {stage: startup.stage, total: secs(performance.now()), network: network()}));
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", watchStartup) : watchStartup();
+
   // quarto-live exercise grades appear as alerts in the cell's output
   new MutationObserver((records) => {
     for (const r of records) for (const n of r.addedNodes) {
