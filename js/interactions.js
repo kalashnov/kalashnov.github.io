@@ -8,8 +8,9 @@
 //   code-grade        {cell, correct}          an exercise graded
 //   code-copy         {block}                  a code block copied
 //   download          {format}                 a post download button
-//   plot-hover / plot-zoom / plot-legend {plot, cell}   plotly charts, the first time per chart and page view
-//   plot-explore      {plot}                   an Observable plot pointed at, the first time per page view
+//   plot-hover        {plot, cell | section}   a chart hovered (plotly or Observable), the first time per chart and page view;
+//                                              plotly: the code cell that drew it; Observable: the section heading it is under
+//   plot-zoom / plot-legend {plot, cell}       plotly charts: zoomed, legend clicked (first time per chart and page view)
 //   input             {input, value}           an Observable input changed (sliders: on release)
 //   runtime-ready     {engine, total, page, runtime, packages, data, setup, network}   quarto-live became ready to
 //                     run code: seconds since the page opened; page = before quarto-live started; then per startup
@@ -27,6 +28,9 @@
   const track = (name, data) => window.umami?.track(name, data);
   window.track = track;   // for anything a post wants to log itself
   const nth = (el, selector) => [...document.querySelectorAll(selector)].indexOf(el) + 1;
+  // the heading of the section an element is in ("Who speaks, and where the beliefs go")
+  const sectionOf = (el) => [...document.querySelectorAll("main h2, main h3")]
+    .filter((h) => h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING).at(-1)?.textContent.trim().slice(0, 100);
   const cellOf = (editor) => editor.closest("[data-cell]")?.dataset.cell || nth(editor, ".exercise-editor");
   const done = new WeakMap();   // element -> event names already sent for it
   const once = (el, name, data) => {
@@ -97,7 +101,7 @@
   // Observable plots: the first time the reader points at one
   document.addEventListener("pointerover", (e) => {
     const plot = e.target.closest?.('svg[class^="plot"]');
-    if (plot) once(plot, "plot-explore", {plot: nth(plot, 'svg[class^="plot"]')});
+    if (plot) once(plot, "plot-hover", {plot: nth(plot, 'svg[class^="plot"]'), section: sectionOf(plot)});
   });
 
   // plotly charts (also those re-drawn when a quarto-live cell runs): hook each new chart once
