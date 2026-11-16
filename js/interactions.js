@@ -16,6 +16,11 @@
 //                     stage (download of webR/Pyodide, installing the packages, data files, setup); network type
 //   runtime-abandoned {engine, stage, total, network}   the reader left before it was ready
 //   runtime-error     {engine, message}        startup failed
+//   paper-abstract    {paper}                  Research page: a paper's abstract opened
+//   paper-image       {paper}                  Research page: a paper's picture enlarged
+//   paper-link        {paper, link}            Research page: a paper's link followed (title, pdf, arxiv, tutorial,
+//                                              code, ..., coauthor, scholar); the label only, not the address
+//   research-sort     {by}                     Research page: papers sorted by time or by field
 // Elements are numbered in page order ("cell": 2 is the page's second quarto-live cell).
 (() => {
   const track = (name, data) => window.umami?.track(name, data);
@@ -60,6 +65,24 @@
   document.addEventListener("keydown", (e) => {   // quarto-live runs a cell on Ctrl/Cmd/Shift+Enter
     const editor = e.key === "Enter" && (e.ctrlKey || e.metaKey || e.shiftKey) && e.target.closest(".exercise-editor");
     if (editor) track("code-run", {cell: nth(editor, ".exercise-editor"), via: "keyboard"});
+  });
+
+  // Research page (publications.qmd, _partials/papers.ejs): abstracts, pictures, links, sorting
+  document.addEventListener("click", (e) => {
+    const paper = e.target.closest(".paper");
+    const title = paper?.querySelector(".title")?.textContent.trim().slice(0, 100);
+    if (paper && e.target.closest(".abstract-toggle")) {
+      if (!paper.querySelector(".abstract")?.hidden) track("paper-abstract", {paper: title});   // opened, not closed
+    } else if (paper && e.target.closest(".paper-preview img")) {
+      track("paper-image", {paper: title});
+    } else if (paper && e.target.closest("a")) {
+      const a = e.target.closest("a");
+      const link = a.closest(".title") ? "title" : a.closest(".meta") ? "coauthor"
+        : a.classList.contains("scholar-badge") ? "scholar" : a.textContent.trim().slice(0, 50);
+      track("paper-link", {paper: title, link});
+    } else if (e.target.closest(".sort-toggle button, .sort-toggle a")) {
+      track("research-sort", {by: e.target.closest("button, a").textContent.trim().slice(0, 50)});
+    }
   });
 
   // Observable inputs (sliders report on release, not while dragging)
