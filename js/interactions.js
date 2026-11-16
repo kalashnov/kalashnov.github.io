@@ -1,7 +1,8 @@
 // Site-wide: quizzes (_partials/quiz.lua) and Umami custom events for reader interactions.
 // Posts need no tracking code: interactions are recognised from the markup Quarto, quarto-live, plotly and
 // Observable produce. Events (Umami adds the page URL to each):
-//   quiz-<id>         {answer, correct}        a quiz option clicked
+//   quiz-<id>         {answer, correct, attempt}   a quiz option clicked; attempt = 1, 2, ... within this page view
+//                     (kept in memory only, nothing stored in the browser: filter attempt = 1 for first answers)
 //   code-run          {cell, via}              a quarto-live cell run (button or keyboard)
 //   code-reset / code-hint / code-solution / code-submit {cell}   the other quarto-live buttons
 //   code-grade        {cell, correct}          an exercise graded
@@ -27,6 +28,7 @@
   };
 
   // quizzes: highlight the choice, say whether it is right, show the explanation, log it
+  const attempts = new Map();   // quiz -> answers so far in this page view
   document.addEventListener("click", (e) => {
     const option = e.target.closest(".quiz-option");
     if (!option) return;
@@ -39,7 +41,8 @@
     quiz.querySelector(".quiz-verdict").innerHTML =
       correct ? "<b>Right.</b>" : `<b>Not quite:</b> the answer is ${right ? right.dataset.label : "another one"}.`;
     quiz.querySelector(".quiz-answer")?.classList.remove("d-none");
-    track(`quiz-${quiz.id || nth(quiz, ".quiz")}`, {answer: option.dataset.label, correct});
+    attempts.set(quiz, (attempts.get(quiz) || 0) + 1);
+    track(`quiz-${quiz.id || nth(quiz, ".quiz")}`, {answer: option.dataset.label, correct, attempt: attempts.get(quiz)});
   });
 
   // buttons: quarto-live cells, code copying, downloads
