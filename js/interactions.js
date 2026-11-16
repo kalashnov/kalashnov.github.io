@@ -8,7 +8,7 @@
 //   code-grade        {cell, correct}          an exercise graded
 //   code-copy         {block}                  a code block copied
 //   download          {format}                 a post download button
-//   plot-hover / plot-zoom / plot-legend {plot}   plotly charts, the first time per chart and page view
+//   plot-hover / plot-zoom / plot-legend {plot, cell}   plotly charts, the first time per chart and page view
 //   plot-explore      {plot}                   an Observable plot pointed at, the first time per page view
 //   input             {input, value}           an Observable input changed (sliders: on release)
 //   runtime-ready     {engine, total, page, runtime, packages, data, setup, network}   quarto-live became ready to
@@ -21,11 +21,13 @@
 //   paper-link        {paper, link}            Research page: a paper's link followed (title, pdf, arxiv, tutorial,
 //                                              code, ..., coauthor, scholar); the label only, not the address
 //   research-sort     {by}                     Research page: papers sorted by time or by field
-// Elements are numbered in page order ("cell": 2 is the page's second quarto-live cell).
+// Code cells are named by their label (`#| label: fit` -> "cell": "fit"; set by _partials/prerun.qmd), charts drawn
+// by a cell carry its name too; anything unnamed is numbered in page order ("cell": 2 = the page's second cell).
 (() => {
   const track = (name, data) => window.umami?.track(name, data);
   window.track = track;   // for anything a post wants to log itself
   const nth = (el, selector) => [...document.querySelectorAll(selector)].indexOf(el) + 1;
+  const cellOf = (editor) => editor.closest("[data-cell]")?.dataset.cell || nth(editor, ".exercise-editor");
   const done = new WeakMap();   // element -> event names already sent for it
   const once = (el, name, data) => {
     const sent = done.get(el) || new Set();
@@ -58,13 +60,13 @@
     if (!button) return;
     const editor = button.closest(".exercise-editor");
     const name = CODE_BUTTONS[button.textContent.trim().toLowerCase()];
-    if (editor && name) track(name, {cell: nth(editor, ".exercise-editor"), ...(name === "code-run" && {via: "button"})});
+    if (editor && name) track(name, {cell: cellOf(editor), ...(name === "code-run" && {via: "button"})});
     else if (button.matches(".code-copy-button")) track("code-copy", {block: nth(button, ".code-copy-button")});
     else if (button.closest(".post-downloads")) track("download", {format: button.textContent.trim()});
   });
   document.addEventListener("keydown", (e) => {   // quarto-live runs a cell on Ctrl/Cmd/Shift+Enter
     const editor = e.key === "Enter" && (e.ctrlKey || e.metaKey || e.shiftKey) && e.target.closest(".exercise-editor");
-    if (editor) track("code-run", {cell: nth(editor, ".exercise-editor"), via: "keyboard"});
+    if (editor) track("code-run", {cell: cellOf(editor), via: "keyboard"});
   });
 
   // Research page (publications.qmd, _partials/papers.ejs): abstracts, pictures, links, sorting
@@ -103,7 +105,8 @@
     for (const gd of document.querySelectorAll(".js-plotly-plot")) {
       if (gd.dataset.tracked || typeof gd.on !== "function") continue;
       gd.dataset.tracked = "1";
-      const data = () => ({plot: nth(gd, ".js-plotly-plot")});
+      const cell = gd.closest("[data-cell]")?.dataset.cell;   // the code cell that drew it, if named
+      const data = () => ({plot: nth(gd, ".js-plotly-plot"), ...(cell && {cell})});
       gd.on("plotly_hover", () => once(gd, "plot-hover", data()));
       gd.on("plotly_relayout", (r) => Object.keys(r).some((k) => /range|autorange/.test(k)) && once(gd, "plot-zoom", data()));
       gd.on("plotly_legendclick", () => once(gd, "plot-legend", data()));
@@ -153,8 +156,8 @@
       if (!grade) continue;
       // the grade is shown below its cell: the last editor before it on the page
       const editors = [...document.querySelectorAll(".exercise-editor")];
-      const cell = editors.filter((ed) => ed.compareDocumentPosition(grade) & Node.DOCUMENT_POSITION_FOLLOWING).length;
-      track("code-grade", {cell, correct: grade.classList.contains("alert-success")});
+      const before = editors.filter((ed) => ed.compareDocumentPosition(grade) & Node.DOCUMENT_POSITION_FOLLOWING);
+      track("code-grade", {cell: before.length ? cellOf(before.at(-1)) : 0, correct: grade.classList.contains("alert-success")});
     }
   }).observe(document.documentElement, {childList: true, subtree: true});
 })();
