@@ -8,7 +8,7 @@ bibliography: references.bib
 code-copy: false   # no code is shown; hidden cells would otherwise leave copy buttons
 ---
 
-A seller wants to give one good to whichever of two buyers values it more. Unlike the classical Vickrey setting, however, we will assume, that the information aquisition is costly for some reason. Skipping the detailed analysis of incentives for this tutorial, I show how this forces the optimal mechanism to be dynamic. Here I demonstrate on a model with two buyers, each with a private value $v_i \in \{0, 1\}$. 
+A seller wants to give one good to whichever of two buyers values it more. Unlike the classical Vickrey setting, however, we will assume that the information acquisition is costly for some reason. Skipping the detailed analysis of incentives for this tutorial, I show how this forces the optimal mechanism to be dynamic. Here I demonstrate on a model with two buyers, each with a private value $v_i \in \{0, 1\}$. 
 
 ## Setting
 
@@ -18,15 +18,15 @@ $$
 c\,\big(H(\mu_i) - \mathbb{E}[H(\mu_i')]\big), \qquad H(\mu) = -\mu \ln \mu - (1-\mu) \ln (1-\mu),
 $$
 
-where $\mu_i'$ is the designer's belief after the message. This is called a Uniformly Posterior Seperable (UPS) cost. An important property of this cost function, is that it telescopes: it doesn't matter in what order do the buyers send messages, the only thing that matters from the cost is the final belief.
+where $\mu_i'$ is the designer's belief after the message. This is called a Uniformly Posterior Separable (UPS) cost. An important property of this cost function is that it telescopes: it does not matter in what order the buyers send messages, the only thing that matters from the cost is the final belief.
 
 ## A minimal example
 
-Previous rational inattention literature, e.g. @hebertRationalInattentionWhen shows that in a rational inattention model with a **single player** and **no time preferences**, the dynamic model is equivalent to a **static model**, which is a consequence of the UPS cost: the dynamics doesn't matter, only the final belief matters. Other research show how dynamics arise with **time preferences** or **uncertainty** [@zhongOptimalDynamicInformation2022; @georgiadis-harrisPreparingAct2026]. I show how two players with private values must engage in dynamics to save on costs. This observation is consistent with communication complexity literature, e.g. @bravermanInformationExactCommunication2012
+Previous rational inattention literature, e.g. @hebertRationalInattentionWhen shows that in a rational inattention model with a **single player** and **no time preferences**, the dynamic model is equivalent to a **static model**, which is a consequence of the UPS cost: the dynamics do not matter, only the final belief matters. Other research shows how dynamics arise with **time preferences** or **uncertainty** [@zhongOptimalDynamicInformation2022; @georgiadis-harrisPreparingAct2026]. I show how two players with private values must engage in dynamics to save on costs. This observation is consistent with communication complexity literature, e.g. @bravermanInformationExactCommunication2012
 
 Here is a minimal example, demonstrating the reason for that:
 
-::: {.quiz #ask-first answer="Buyer b" title="Quiz: whom do we ask first?"}
+::: {.quiz #ask-first answer="Buyer b" title="Whom do we ask first?"}
 Suppose $v_i \in \{0, 1\}$, $\mu^0_a = 0.6$, $\mu^0_b = 0.9$. Whom do we ask to extract information first?
 
 - Buyer a
@@ -41,7 +41,7 @@ After a low signal, the posterior is $\mu^1_b = 0.6$; after a high signal, buyer
 
 ## The 2x2 states solution
 
-More generally, we may allow the agents to send messages in any order, until the designer decides to stop at time $\tau$. Ignoring incentives for now, here I show, how the designer can compute the optimal dynamic mechanism. The designer's problem is to maximize the expected value of the good minus the expected cost of communication[^const]:
+More generally, we may allow the agents to send messages in any order, until the designer decides to stop at time $\tau$. Ignoring incentives for now, here I show how the designer can compute the optimal dynamic mechanism. The designer's problem is to maximize the expected value of the good minus the expected cost of communication[^const]:
 
 $$
 V(\mu_a, \mu_b) = \max_{\text{conversation}}\
@@ -53,7 +53,7 @@ $$
 
 where $\mu_i^\tau$ is the belief when the conversation ends. What sets this model apart from other rational inattention models is that no single experiment can reveal information about both $v_a$ and $v_b$ at once: each message is sent by one buyer and is informative only about that buyer's own value. One could encode this restriction in a joint cost function over signals about $(v_a, v_b)$ by making any signal that depends on both values infinitely costly. That cost function, however, is no longer UPS. 
 
-If only buyer $a$ could speak, then with a UPS cost the problem would be solved by concavification: the value is the smallest function $\operatorname{cav}_a f$ concave in $\mu_a$, that lies above the stopping value $f= \max\{\mu_a, \mu_b\} + c\big(H(\mu_a) + H(\mu_b)\big)$. The designer can do better than stopping by asking buyer $a$ to split the belief $\mu_a$ into two posteriors that average back to $\mu_a$; the value then becomes the probability-weighted average of the values at those posteriors. With two players, the problem is a bi-concavification problem [@aumannBICONVEXITYBIMARTINGALESt]. The optimal value function is the smallest function aboce $f$, that is concave in each $\mu_i$ separately:
+If only buyer $a$ could speak, then with a UPS cost the problem would be solved by concavification: the value is the smallest function $\operatorname{cav}_a f$ concave in $\mu_a$, that lies above the stopping value $f= \max\{\mu_a, \mu_b\} + c\big(H(\mu_a) + H(\mu_b)\big)$. The designer can do better than stopping by asking buyer $a$ to split the belief $\mu_a$ into two posteriors that average back to $\mu_a$; the value then becomes the probability-weighted average of the values at those posteriors. With two players, the problem is a bi-concavification problem [@aumannBICONVEXITYBIMARTINGALESt]. The optimal value function is the smallest function above $f$, that is concave in each $\mu_i$ separately:
 
 $$
 V(\mu_a, \mu_b) = \max
@@ -68,7 +68,7 @@ The optimal solution can then be computed by iterating the bi-concavification op
 
 ## The mechanism
 
-The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it (or tap) to see what happens at that state: the arrows show optimal experiment to be run.
+The plot shows the state space of beliefs $(\mu_a, \mu_b)$. Hover over it to see what happens at that state: the arrows show optimal experiment to be run.
 
 ```{python}
 #| echo: false
