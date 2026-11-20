@@ -19,6 +19,6 @@ about:
       href: https://www.linkedin.com/in/georgy-kalashnov-32543279
 ---
 
-I am a researcher in Econometrics, Machine Learning, and Mechanism Design, now joining a PhD program in Economics at UC San Diego. I concentrate on theory for applied research, including, but not limited to the problems businesses face. For now you can check out our paper Treatment Allocation under Uncertain Costs
+I am a researcher in Econometrics, Machine Learning, and Mechanism Design, now joining the PhD program in Economics at UC San Diego. I focus on theory for applied research, including but not limited to the problems businesses face. For now, you can check out our paper *Treatment Allocation under Uncertain Costs*.
 
-My research agenda was formed during at my jobs: [Yandex.Go](https://go.yandex/), Department of Economics at Moscow State University and [Research Fellowship program at Stanford](https://www.gsb.stanford.edu/programs/research-fellows). I am grateful to my former (and current) collegues for their contribution to my skills, knowledge and vision on what constitutes an important research.
+My research agenda took shape during my work at [Yandex.Go](https://go.yandex/), the Department of Economics at Moscow State University, and the [Research Fellowship program at Stanford](https://www.gsb.stanford.edu/programs/research-fellows). I am grateful to my former (and current) colleagues for their contributions to my skills, my knowledge, and my sense of what constitutes important research.
