@@ -71,17 +71,6 @@ cv:
         highlights:
           - 'Lecturer: Applied Econometrics (Fall 2018–2020, Spring 2020–2021), Microeconomics II (Fall 2019), Introduction to Data Analysis (Fall 2019–2020)'
           - 'Teaching Assistant: Behavioral Economics (Fall 2015–2018, 2020)'
-    Honors and Events:
-      - label: 'Summer School "Experimental Economics: Purposes, Design, Tools" (EPEE)'
-        details: Participant, 2019
-      - label: All-Russian competition in economics for high school students
-        details: Jury, 2018–2021
-      - label: Econometrics Game in Amsterdam
-        details: Finalist, 2017
-      - label: Jerusalem School in Network Theory
-        details: Participant, 2016
-      - label: International Statistics Olympiad in Iran
-        details: 1st prize, 2014
     skills:
       - label: Python
         details: scikit-learn, XGBoost, TensorFlow, PyTorch, oTree; web scraping and visualization (Beautiful Soup, requests, Dash)
