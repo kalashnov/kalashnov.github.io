@@ -45,6 +45,13 @@ cv:
     Working Papers: working
     Work in Progress: wip
     experience:
+      - company: Instacart
+        position: Machine Learning PhD Intern, Economics
+        start_date: 2024, June
+        end_date: 2024, September
+        location: San Diego, CA
+        highlights:
+          - Fitting, and implementing a conditional treatment effect model to personalize user experience
       - company: Stanford Graduate School of Business
         position: Research Assistant
         start_date: 2021
@@ -72,6 +79,8 @@ cv:
           - 'Lecturer: Applied Econometrics (Fall 2018–2020, Spring 2020–2021), Microeconomics II (Fall 2019), Introduction to Data Analysis (Fall 2019–2020)'
           - 'Teaching Assistant: Behavioral Economics (Fall 2015–2018, 2020)'
     skills:
+      - label: AI
+        details: multiagent setups, cost optimization and prompt engineering
       - label: Python
         details: scikit-learn, XGBoost, TensorFlow, PyTorch, oTree; web scraping and visualization (Beautiful Soup, requests, Dash)
       - label: R
