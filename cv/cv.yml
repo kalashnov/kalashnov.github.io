@@ -47,8 +47,8 @@ cv:
     experience:
       - company: Instacart
         position: Machine Learning PhD Intern, Economics
-        start_date: 2024, June
-        end_date: 2024, September
+        start_date: 2024-06
+        end_date: 2024-09
         location: San Diego, CA
         highlights:
           - Fitting, and implementing a conditional treatment effect model to personalize user experience
