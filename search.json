@@ -137,7 +137,7 @@
     "href": "index.html",
     "title": "Georgy Kalashnov",
     "section": "",
-    "text": "I am a researcher in Econometrics, Machine Learning, and Mechanism Design, now joining the PhD program in Economics at UC San Diego. I focus on theory for applied research, including but not limited to the problems businesses face. For now, you can check out our paper Treatment Allocation under Uncertain Costs.\nMy research agenda took shape during my work at Yandex.Go, the Department of Economics at Moscow State University, and the Research Fellowship program at Stanford. I am grateful to my former (and current) colleagues for their contributions to my skills, my knowledge, and my sense of what constitutes important research."
+    "text": "I am a econometrician with depth in mechanism design, a PhD candidate at UC San Diego.\nIn econometrics I am interested in treatment effect heterogeneity, e.g. estimation, and consequences for interpretation of popular estimands. In mechanism design I am interested in information aquisition.\nMore broadly, I am an engineer in heart, and therefore I like to engineer solutions to problems economic applications face, let it be an estimator/an interpretation of an estimator, or a mechanism to allocate a good.\nBefore UC San Diego, my previous jobs and former collegues formed my research taste at Yandex.Go, Department of Economics at Moscow State University and Research Fellowship program at Stanford."
   },
   {
     "objectID": "posts/2026-11-15-ohie-parametric-tutorial/index.html",
