@@ -9,7 +9,7 @@
   field: Econometric methods
   selected: false
   summary: We provide design based interpretation of Poisson regression in the spirit of Angrist (1998)
-  abstract: We study the properties of Poisson regression under heterogeneous treatment effects as a better choice compared to log-linear regression in policy evaluation setting. Log-linear regression aggregates multiplicative individual effects from both large and small subjects with equal weights. However, a policy evaluation study is interested in a ratio of the means rather than mean of the ratios, which is to give weights proportional to the subject sizes. We show that Poisson regression estimates exactly the ratio of means in different specifications. We also show a double robust way to estimate an average treatment effect in Poisson regression.
+  abstract: Log-linear regression aggregates multiplicative individual effects from both large and small subjects with equal weights. However, a policy evaluation study is interested in a ratio of the means rather than mean of the ratios, which is to give weights proportional to the subject sizes. In the spirit of Angrist (1998) result for linear regression, we show that Poisson regression on treatment and controls estimates a ratio of weighted means. We also show that this estimand is the easiest to estimate, in the sense of carrying the most information about a common shift in effects. Finally, we refit 112 log-like published estimates from top-five journals, and compare them to a Poisson regression.
   preview: FQRPW2V8.png
   links: []
 - key: AM7PHNQE
